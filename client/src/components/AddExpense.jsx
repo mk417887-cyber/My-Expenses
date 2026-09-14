@@ -4,14 +4,55 @@ import { useState } from "react";
 const AddExpense = ({ onAddExpense }) => {
 
     const [title, setTitle] = useState("");
-    const [amount, setAmount] = useState("0");
-    const [category, setCategory] = useState("");
+    const [amount, setAmount] = useState("");
+    const [category, setCategory] = useState("Food");
     const [date, setDate] = useState("");
     const [type, setType] = useState("expense");
+    const [errors , setErrors] = useState(
+        {
+            title: "",
+            amount: "",
+            category: "",
+            date: ""
+        } // Using plural errors makes sense because you're storing errors for multiple fields.
+    );
+    const validateForm = () => {
+        // validation here
+        //new object
+        const newErrors = {
+            title: "",
+            amount: "",
+            category: "",
+            date: ""
+        };
+        if (title === "") {
+            newErrors.title = "Title is required";
+        }
+        
+        if (amount === "" || Number(amount) <= 0) {
+            newErrors.amount = "Amount must be greater than 0";
+        }
+        
+        if (category === "") {
+            newErrors.category = "Category is required";
+        }
+        
+        if (date === "") {
+            newErrors.date = "Date is required";
+        }
+        setErrors(newErrors);
 
+        const hasErrors = Object.values(newErrors).some( // asks:          "Is there at least one error that isn't an empty string?"
+             (error) => error !== "" 
+            );
+             return !hasErrors;
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault(); // Normally, submitting an HTML form causes the browser to refresh/navigate
+        if (!validateForm()) {
+            return;
+        }
         const newExpense = {
             id: Math.random(),
             title,
@@ -41,7 +82,6 @@ const AddExpense = ({ onAddExpense }) => {
 
     return (
         <div>
-            <h2>Add Expense</h2>
 
             <form onSubmit={handleSubmit}>
                 <input
@@ -50,12 +90,14 @@ const AddExpense = ({ onAddExpense }) => {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                 />
+                  {errors.title && <p>{errors.title}</p>}  
                 <input
                     type="number"
                     placeholder="Amount"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                 />
+                {errors.amount && <p>{errors.amount}</p>}
                 <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
@@ -67,11 +109,13 @@ const AddExpense = ({ onAddExpense }) => {
                     <option value="Education">Education</option>
                     <option value="Salary">Salary</option>
                 </select>
+                {errors.category && <p>{errors.category}</p>}
                 <input
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                 />
+                {errors.date && <p>{errors.date}</p>}
                 <select
                     value={type}
                     onChange={(e) => setType(e.target.value)}
