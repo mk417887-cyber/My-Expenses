@@ -357,163 +357,62 @@
 // }
 
 // export default App
-
-import expenses from "./data.js";
-import { useState, useEffect } from "react";
-
+import useExpenses from "./hooks/useExpenses.js";
 import Dashboard from "./components/Dashboard.jsx";
 import ExpenseFilters from "./components/ExpenseFilters.jsx";
 import ExpenseSummary from "./components/ExpenseSummary.jsx";
 import AddExpense from "./components/AddExpense.jsx";
 import ExpenseList from "./components/ExpenseList.jsx";
+import Users from "./components/Users.jsx";
 
 const App = () => {
  
+  const {
+    editingId,
 
-  const [editingId, setEditingId] = useState(null);
+    handleDelete,
+    handleAddExpense,
+    handleEdit,
+    handleSave,
+    handleCancelEdit,
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
-  const [filterCategory, setFilterCategory] = useState("all");
-  const [sortOption, setSortOption] = useState("default");
+    searchTerm,
+    filterType,
+    filterCategory,
+    sortOption,
 
-  const handleDelete = (id) => {
-    setExpenseList(
-      expenseList.filter((item) => item.id !== id)
-    );
-  };
+    handleFilterTypeChange,
+    handleFilterCategoryChange,
+    handleSortOptionChange,
+    handleSearchChange,
 
-  const handleEdit = (id) => {
-    setEditingId(id);
-  };
+    sortedExpenses,
 
-  const handleCancelEdit = () => {
-    setEditingId(null);
-  };
+    totalIncome,
+    totalExpense,
+    totalBalance,
+    numberOfExpenses,
+    averageOfExpenses,
+    highestExpense,
+    totalByCategory
+} = useExpenses();
+// And App.jsx will basically become:
 
-  const handleSave = (updatedExpense) => {
-    setExpenseList(
-      expenseList.map((item) =>
-        item.id === editingId ? updatedExpense : item
-      )
-    );
+// useExpenses()
+//       ↓
+// receive everything needed
+//       ↓
+// pass data to components
+//       ↓
+// render UI
 
-    setEditingId(null);
-  };
-
-  const handleAddExpense = (newExpense) => {
-    setExpenseList([...expenseList, newExpense]);
-  };
-
-  const handleFilterTypeChange = (value) => {
-    setFilterType(value);
-  };
-
-  const handleFilterCategoryChange = (value) => {
-    setFilterCategory(value);
-  };
-
-  const handleSortOptionChange = (value) => {
-    setSortOption(value);
-  };
-
-  const handleSearchChange = (value) => {
-    setSearchTerm(value);
-  };
-
-  const totalIncome = expenseList
-    .filter((item) => item.type === "income")
-    .reduce((total, item) => total + item.amount, 0);
-
-  const totalExpense = expenseList
-    .filter((item) => item.type === "expense")
-    .reduce((total, item) => total + item.amount, 0);
-
-  const totalBalance = totalIncome - totalExpense;
-
-  const filteredExpenses = expenseList.filter((item) => {
-    const typeMatches =
-      filterType === "all" || item.type === filterType;
-
-    const categoryMatches =
-      filterCategory === "all" ||
-      item.category === filterCategory;
-
-    const searchMatches =
-      item.title
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      item.category
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-
-    return typeMatches && categoryMatches && searchMatches;
-  });
-
-  const sortedExpenses = [...filteredExpenses];
-
-  if (sortOption === "highest") {
-    sortedExpenses.sort((a, b) => b.amount - a.amount);
-  }
-
-  if (sortOption === "lowest") {
-    sortedExpenses.sort((a, b) => a.amount - b.amount);
-  }
-
-  if (sortOption === "oldest") {
-    sortedExpenses.sort(
-      (a, b) => new Date(a.date) - new Date(b.date)
-    );
-  }
-
-  if (sortOption === "newest") {
-    sortedExpenses.sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
-    );
-  }
-
-  const numberOfExpenses = expenseList
-    .filter((item) => item.type === "expense")
-    .length;
-
-  const averageOfExpenses =
-    numberOfExpenses === 0
-      ? 0
-      : expenseList
-        .filter((item) => item.type === "expense")
-        .reduce(
-          (total, item) => total + item.amount,
-          0
-        ) / numberOfExpenses;
-
-  const highestExpense = expenseList
-    .filter((item) => item.type === "expense")
-    .reduce(
-      (max, item) => Math.max(max, item.amount),
-      0
-    );
-
-  const expensesByCategory = expenseList
-    .filter((item) => item.type === "expense")
-    .reduce((acc, item) => {
-      if (!acc[item.category]) {
-        acc[item.category] = 0;
-      }
-
-      acc[item.category] += item.amount;
-
-      return acc;
-    }, {});
-
-  const totalByCategory = Object.keys(expensesByCategory).map(
-    (category) => ({
-      category,
-      total: expensesByCategory[category]
-    })
-  );
+  
 
   return (
     <div>
+
+      <Users />
+      
       <ExpenseFilters
         filterType={filterType}
         filterCategory={filterCategory}
@@ -546,7 +445,15 @@ const App = () => {
       />
 
       <ExpenseList
-        expenses={sortedExpenses}
+        expenses={sortedExpenses} // these functions are being passed as props.  // Every time useExpenses() runs, JavaScript can create new function references: Previous render:
+        // handleDelete → function A
+        // Next render:
+        // handleDelete → function B
+        
+        // Even if the function's code hasn't changed, A and B are different function objects.
+        
+        // This becomes important when using React.memo() on child components.    
+
         handleDelete={handleDelete}
         handleEdit={handleEdit}
         editingId={editingId}

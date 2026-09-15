@@ -1,6 +1,6 @@
 // import React from 'react'
 // import expenses from "./data.js"
-import { useState } from "react";
+import { useState , memo} from "react";
 
 const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSave }) => {  // This is destructuring. of props
 
@@ -155,8 +155,24 @@ const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSav
     )
 }
 
-export default ExpenseItem
+export default memo(ExpenseItem)  // memorize the component using memo
 
+// Now ask yourself:
+
+// If ExpenseItem is memoized, will it always avoid re-rendering when App re-renders?
+
+// No. Because it receives several props:
+
+// expense
+// onDelete
+// onEdit
+// isEditing
+// onCancelEdit
+// onSave
+
+// If any of those props changes, the component can render again.
+
+// And this is exactly why we learned useCallback before React.memo.
 // Right now there's a major problem: before Local storage usage
 
 // If you refresh the browser, all newly added/edited/deleted expenses disappear. When you add/delete/edit:
