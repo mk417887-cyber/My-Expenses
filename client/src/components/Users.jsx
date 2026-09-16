@@ -1,34 +1,40 @@
-import React, { useEffect, useState } from 'react'
+import useFetch from "../hooks/useFetch.js";
 
 const Users = () => {
 
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+    // useEffect(() => {
+    //     fetch("https://jsonplaceholder.typicode.com/users")
+    //         .then((response) => {
+    //             if (!response.ok) {
+    //                 throw new Error("Failed to fetch users");
+    //             }
+    //             return response.json()// Convert the response to JSON.
+    //         })
+    //         .then((data) => {
+    //             setUsers(data); // Put the result into users using setUsers
+    //             setLoading(false);
+    //         })
+    //         .catch((error) => { // .then()  → Something went successfully  // .catch() → Something went wrong
+    //             setError("Something went wrong");
+    //             setLoading(false);
+    //             console.log(error);
+    //         });
+    // }, []);
 
-    useEffect(() => {
-        fetch("https://jsonplaceholder.typicode.com/users")
-            .then((response) => response.json()) // Convert the response to JSON.
-            .then((data) => {
-                setUsers(data); // Put the result into users using setUsers
-                setLoading(false);
-            })
-            .catch((error) => { // .then()  → Something went successfully  // .catch() → Something went wrong
-                setError("Something went wrong");
-                setLoading(false);
-                console.log(error);
-            });
-    }, []);
+    //This works, but with multiple .then() calls, things can become harder to read.
 
-
-    return (
-        <div>
-            {loading ? (<p>Loading...</p>)
-                : error ? (
-                    <p>{error}</p>
+    const { data, loading, error } = useFetch(
+        "https://jsonplaceholder.typicode.com/users"  // Users.jsx
+    );                                                                            //     |  calls 
+                                                                                //      V                                  
+    return (                                                                // useFetch()
+        <div>                                                              
+            {loading ? (<p>Loading...</p>)                  //   ┌────────┼─────────┐
+                : error ? (                                                 //   ↓        ↓         ↓
+                    <p>{error}</p>                                  //   data     loading    error
                 )
                     : (
-                        users.map((user) => {//users ko map krkr user me bhr do 
+                        data.map((user) => {//users ko map krkr data me bhr do // data -> array of users 
                             return (
                                 <div key={user.id}>
                                     <p >{user.email}</p>

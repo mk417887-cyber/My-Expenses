@@ -1,6 +1,7 @@
 // A custom hook is simply a JavaScript function that lets us package reusable React logic.
 // You can think of a custom hook as a function that returns a value or an object.
-
+// The main difference between a custom hook and a regular function is that custom hooks start with use.
+// agr hame kuch value chaiye in different compnents to hook pe jao vha se value retrive krr lo , baar baar un components me value define krne ki jrurat nahi hai
 
  // Get data from the hook → pass it to components → render the UI.
 
