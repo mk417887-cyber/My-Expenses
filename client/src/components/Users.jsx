@@ -26,23 +26,21 @@ const Users = () => {
     const { data, loading, error } = useFetch(
         "https://jsonplaceholder.typicode.com/users"  // Users.jsx
     );                                                                            //     |  calls 
-                                                                                //      V                                  
+    //      V                                  
     return (                                                                // useFetch()
-        <div>                                                              
-            {loading ? (<p>Loading...</p>)                  //   ┌────────┼─────────┐
-                : error ? (                                                 //   ↓        ↓         ↓
-                    <p>{error}</p>                                  //   data     loading    error
+        <div>
+            {/* // if loading is true then loading... */}
+            {loading && <p>Loading...</p>} 
+            {error && <p>{error}</p>}
+            {data.map((user) => {//users ko map krkr data me bhr do // data -> array of users  
+                return (// This pattern is closely related to stale-while-revalidate: // Show data you already have immediately, while checking for newer data in the background.
+                    <div key={user.id}>
+                        <p >{user.email}</p>
+                        {/* < p key ={user.id}>{user.name}</p> */}
+                    </div>
                 )
-                    : (
-                        data.map((user) => {//users ko map krkr data me bhr do // data -> array of users 
-                            return (
-                                <div key={user.id}>
-                                    <p >{user.email}</p>
-                                    {/* < p key ={user.id}>{user.name}</p> */}
-                                </div>
-                            )
-                        })
-                    )}
+            })}
+
         </div>
     )
 }

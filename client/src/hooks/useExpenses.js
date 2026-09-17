@@ -10,36 +10,81 @@
 // useCallback → recreates function when dependencies change
 
 
-import { useState, useEffect , useMemo, useCallback, use } from "react";
+import { useState, useEffect , useMemo, useCallback } from "react";
 import expenses from "../data.js";
+import useFetch from "./useFetch.js";
 
 const useExpenses = () => {
-    const [expenseList, setExpenseList] = useState(() => {
-        const storedExpenseList = localStorage.getItem("expenseList");
+    // const [expenseList, setExpenseList] = useState(() => {
+    //     const storedExpenseList = localStorage.getItem("expenseList");
 
-        if (storedExpenseList) {
-            return JSON.parse(storedExpenseList);
-        }
+    //     if (storedExpenseList) {
+    //         return JSON.parse(storedExpenseList);
+    //     }
 
-        return expenses;
-    });
-
-
-    useEffect(() => {
-        localStorage.setItem(
-            "expenseList",
-            JSON.stringify(expenseList)
-        );
-    }, [expenseList]);
+    //     return expenses;
+    // });
 
 
-    const handleDelete = useCallback((id) => {
-        setExpenseList((previousExpenses) => { // functional state update // The functional state updater is useful because it lets us avoid directly reading the current state.
-            return previousExpenses.filter((item) => item.id !== id); 
-        });
-    }, []); // Why [] now? // The dependency array is an array of values that tell React when to re-run the effect.
+    // useEffect(() => {
+    //     localStorage.setItem(
+    //         "expenseList",
+    //         JSON.stringify(expenseList)
+    //     );
+    // }, [expenseList]);
+
+
+    // const handleDelete = useCallback((id) => {
+    //     setExpenseList((previousExpenses) => { // functional state update // The functional state updater is useful because it lets us avoid directly reading the current state.
+    //         return previousExpenses.filter((item) => item.id !== id); 
+    //     });
+    // }, []); // Why [] now? // The dependency array is an array of values that tell React when to re-run the effect.
     // Because the callback doesn't depend on expenseList anymore, we can remove it from the dependency array.
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+    const [searchTerm, setSearchTerm] = useState("");
+    
+    const url = `http://localhost:3001/api/expenses?search=${debouncedSearchTerm}`;
 
+    
+    const { data, loading, error } = useFetch(url);
+
+    console.log(data);
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 500);
+
+        return () => {
+            clearTimeout(timer);
+        };
+    },[searchTerm]);
+
+
+    const [expenseList, setExpenseList] = useState([]);
+
+useEffect(() => {
+    setExpenseList(data);
+}, [data]);
+
+const handleDelete = useCallback(async (id) => {
+    try{const response = await fetch( // fetching from backend // backend delets the data
+        `http://localhost:3001/api/expenses/${id}`,
+        {
+            method: "DELETE"
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error("Failed to delete expense");
+    }
+
+    const data = await response.json();
+
+    setExpenseList(data)}
+    catch(error){
+        return error
+    }
+}, []);
  
     const handleAddExpense = useCallback((newExpense) => { // newExpense → function parameter, not a dependency
         setExpenseList((previousExpenses) => { // previousExpenses → supplied by React's state updater  // setExpenseList → React's state setter, which is stable
@@ -84,10 +129,11 @@ const useExpenses = () => {
     }, [editingId]); // It reads editingId, so editingId must be a dependency.
 // Dependencies are determined by what the callback uses from its surrounding scope.
 
-    const [searchTerm, setSearchTerm] = useState("");
+   
     const [filterType, setFilterType] = useState("all");
     const [filterCategory, setFilterCategory] = useState("all");
     const [sortOption, setSortOption] = useState("default");
+   
 
     const handleFilterTypeChange = useCallback((value) => {
         setFilterType(value);
@@ -105,8 +151,7 @@ const useExpenses = () => {
         setSearchTerm(value);
     }, []);
 
-
-    const filteredExpenses = expenseList.filter((item) => {
+    const filteredExpenses = data.filter((item) => {
         const typeMatches =
             filterType === "all" || item.type === filterType;
 
@@ -114,15 +159,9 @@ const useExpenses = () => {
             filterCategory === "all" ||
             item.category === filterCategory;
 
-        const searchMatches =
-            item.title
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-            item.category
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase());
+       
 
-        return typeMatches && categoryMatches && searchMatches;
+        return typeMatches && categoryMatches ;
     });
 
 

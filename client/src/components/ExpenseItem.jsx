@@ -141,7 +141,7 @@ const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSav
                     <p>{expense.category}</p>
                     <p>{expense.date}</p>
                     <p>{expense.type}</p>
-                    <h3>{expense.type === "income" ? "Income" : "Expense"}</h3>
+                    <p>{expense.type === "income" ? "Income" : "Expense"}</p>
                     <button onClick={() => onDelete(expense.id)}>Delete</button>
                     {/* //  Remember how Delete works: ExpenseItem  ↓onDelete(expense.id) ↓ App.handleDelete(id) ↓ setExpenseList(...) */}
 
