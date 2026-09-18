@@ -10,201 +10,631 @@
 // useCallback → recreates function when dependencies change
 
 
-import { useState, useEffect , useMemo, useCallback } from "react";
-import expenses from "../data.js";
-import useFetch from "./useFetch.js";
+// import { useState, useEffect , useMemo, useCallback } from "react";
+// import { getExpenses } from "../api/expenseApi.js";
 
-const useExpenses = () => {
-    // const [expenseList, setExpenseList] = useState(() => {
-    //     const storedExpenseList = localStorage.getItem("expenseList");
+// const useExpenses = () => {
+//     // const [expenseList, setExpenseList] = useState(() => {
+//     //     const storedExpenseList = localStorage.getItem("expenseList");
 
-    //     if (storedExpenseList) {
-    //         return JSON.parse(storedExpenseList);
-    //     }
+//     //     if (storedExpenseList) {
+//     //         return JSON.parse(storedExpenseList);
+//     //     }
 
-    //     return expenses;
-    // });
-
-
-    // useEffect(() => {
-    //     localStorage.setItem(
-    //         "expenseList",
-    //         JSON.stringify(expenseList)
-    //     );
-    // }, [expenseList]);
+//     //     return expenses;
+//     // });
 
 
-    // const handleDelete = useCallback((id) => {
-    //     setExpenseList((previousExpenses) => { // functional state update // The functional state updater is useful because it lets us avoid directly reading the current state.
-    //         return previousExpenses.filter((item) => item.id !== id); 
-    //     });
-    // }, []); // Why [] now? // The dependency array is an array of values that tell React when to re-run the effect.
-    // Because the callback doesn't depend on expenseList anymore, we can remove it from the dependency array.
-    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-    const [searchTerm, setSearchTerm] = useState("");
-    
-    const url = `http://localhost:3001/api/expenses?search=${debouncedSearchTerm}`;
-
-    
-    const { data, loading, error } = useFetch(url);
-
-    console.log(data);
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearchTerm(searchTerm);
-        }, 500);
-
-        return () => {
-            clearTimeout(timer);
-        };
-    },[searchTerm]);
+//     // useEffect(() => {
+//     //     localStorage.setItem(
+//     //         "expenseList",
+//     //         JSON.stringify(expenseList)
+//     //     );
+//     // }, [expenseList]);
 
 
-    const [expenseList, setExpenseList] = useState([]);
-
-useEffect(() => {
-    setExpenseList(data);
-}, [data]);
-
-const handleDelete = useCallback(async (id) => {
-    try{const response = await fetch( // fetching from backend // backend delets the data
-        `http://localhost:3001/api/expenses/${id}`,
-        {
-            method: "DELETE"
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error("Failed to delete expense");
-    }
-
-    const data = await response.json();
-
-    setExpenseList(data)}
-    catch(error){
-        return error
-    }
-}, []);
+//     // const handleDelete = useCallback((id) => {
+//     //     setExpenseList((previousExpenses) => { // functional state update // The functional state updater is useful because it lets us avoid directly reading the current state.
+//     //         return previousExpenses.filter((item) => item.id !== id); 
+//     //     });
+//     // }, []); // Why [] now? // The dependency array is an array of values that tell React when to re-run the effect.
+//     // Because the callback doesn't depend on expenseList anymore, we can remove it from the dependency array.
+//     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+//     const [searchTerm, setSearchTerm] = useState("");
+//     const [isAdding , setIsAdding] = useState(false);
+//     const [isEditing , setIsEditing] = useState(false);
+//     const [isDeleting , setIsDeleting] = useState(false);
+//     const [error , setError] = useState("");
+//     const[loading , setLoading] = useState(false);
  
-    const handleAddExpense = useCallback((newExpense) => { // newExpense → function parameter, not a dependency
-        setExpenseList((previousExpenses) => { // previousExpenses → supplied by React's state updater  // setExpenseList → React's state setter, which is stable
-            return [...previousExpenses, newExpense];
-        });
-        },[]);
-        //     previousExpenses = the latest state
-        // ...previousExpenses = copy all existing expenses
-        // newExpense = add the new one
     
+//     useEffect(() => {
+//         const timer = setTimeout(() => {
+//             setDebouncedSearchTerm(searchTerm);
+//         }, 500);
+
+//         return () => {
+//             clearTimeout(timer);
+//         };
+//     },[searchTerm]);
 
 
-    const [editingId, setEditingId] = useState(null);
+//     const [expenseList, setExpenseList] = useState([]);
 
-
-    const handleEdit = useCallback((id) => {
-        setEditingId(id);
-    } , []);
-
-    const handleCancelEdit = useCallback(() => {
-        setEditingId(null);
-    },[]);
-
-    // const handleSave = useCallback((updatedExpense) => {
-    //     setExpenseList(
-    //         expenseList.map((item) =>
-    //             item.id === editingId ? updatedExpense : item
-    //         )
-    //     )
-
-    //     setEditingId(null);
-    // },[editingId , expenseList]); // or youcan use functional state updater to avoid directly reading the current state
-
-    const handleSave = useCallback((updatedExpense) => {
-        setExpenseList((previousExpenses) => {
-            return previousExpenses.map((item) =>
-                item.id === editingId ? updatedExpense : item
-            );
-        });
+//     useEffect(() => {
+//       const fetchExpenses = async () => {
+//           setLoading(true);
+//            try{
+//             // receive data
+//             const data = await getExpenses();
+//             // put data into expenseList
+//             setExpenseList(data);
+            
+//             fetchExpenses();
+//         }
     
-        setEditingId(null);
-    }, [editingId]); // It reads editingId, so editingId must be a dependency.
-// Dependencies are determined by what the callback uses from its surrounding scope.
+//     catch(error){
+//         return error
+//     }
+//     finally{
+//         setLoading(false);
+//     }
+// }
+//     }, []);
+
+
+// const handleDelete = useCallback(async (id) => {
+
+//     setIsDeleting(true);
+//     try{const response = await fetch( // fetching from backend // backend delets the data
+//         `http://localhost:3001/api/expenses/${id}`,
+//         {
+//             method: "DELETE"
+//         }
+//     );
+
+//     if (!response.ok) {
+//         throw new Error("Failed to delete expense");
+//     }
+
+//     const data = await response.json();
+
+//     setExpenseList(data)}
+//     catch(error){
+//         return error
+//     }
+//     finally{
+//         setIsDeleting(false);
+//     }
+// }, []);
+ 
+//     // const handleAddExpense = useCallback((newExpense) => { // newExpense → function parameter, not a dependency
+//     //     setExpenseList((previousExpenses) => { // previousExpenses → supplied by React's state updater  // setExpenseList → React's state setter, which is stable
+//     //         return [...previousExpenses, newExpense];
+//     //     });
+//     //     },[]);
+//         //     previousExpenses = the latest state
+//         // ...previousExpenses = copy all existing expenses
+//         // newExpense = add the new one
+    
+//         const handleAddExpense = useCallback(async (newExpense) => {
+//             setIsAdding(true);
+//             try {
+//                 const response = await fetch(
+//                     "http://localhost:3001/api/expenses",
+//                     {
+//                         method: "POST",
+        
+//                         headers: { // "The data I'm sending is JSON."
+//                             "Content-Type": "application/json"
+//                         },
+        
+//                         body: JSON.stringify(newExpense) // newExpense is a JavaScript object. // HTTP request body is sent as data, so we convert the object into a JSON string.
+//                     }
+//                 );
+        
+//                 if (!response.ok) {
+//                     throw new Error("Failed to add expense");
+//                 }
+        
+//                 const data = await response.json(); // Convert server response back to JavaScript
+//             //     AddExpense
+//             //     ↓
+//             // handleAddExpense()
+//             //     ↓
+//             // fetch(POST)
+//             //     ↓
+//             // Express
+//             //     ↓
+//             // req.body
+//             //     ↓
+//             // create newExpense + ID
+//             //     ↓
+//             // expenses.push()
+//             //     ↓
+//             // res.json(newExpense)
+//             //     ↓
+//             // response.json()
+//             //     ↓
+//             // data
+//             //     ↓
+//             // setExpenseList()
+//             //     ↓
+//             // React re-renders
+//                 setExpenseList((previousExpenses) => {
+//                     return [...previousExpenses, data];
+//                 });
+        
+//             } catch (error) {
+//                 console.error(error);
+//             }
+//             finally{
+//                 setIsAdding(false);
+//             }
+//         }, []);
+
+//     const [editingId, setEditingId] = useState(null);
+
+
+//     const handleEdit = useCallback((id) => {
+//         setEditingId(id);
+//     } , []);
+
+//     const handleCancelEdit = useCallback(() => {
+//         setEditingId(null);
+//     },[]);
+
+//     // const handleSave = useCallback((updatedExpense) => {
+//     //     setExpenseList(
+//     //         expenseList.map((item) =>
+//     //             item.id === editingId ? updatedExpense : item
+//     //         )
+//     //     )
+
+//     //     setEditingId(null);
+//     // },[editingId , expenseList]); // or youcan use functional state updater to avoid directly reading the current state
+//     const handleSave = useCallback(async (updatedExpense) => {
+//         isEditing(true);
+//         try {
+//             const response = await fetch(
+//                 `http://localhost:3001/api/expenses/${updatedExpense.id}`,
+//                 {
+//                     method: "PUT",
+//                     headers: {
+//                         "Content-Type": "application/json"
+//                     },
+//                     body: JSON.stringify(updatedExpense)
+//                 }
+//             );
+    
+//             if (!response.ok) {
+//                 throw new Error("Failed to update expense");
+//             }
+    
+//             const data = await response.json();
+    
+//             setExpenseList((previousExpenses) => {
+//                 return previousExpenses.map((item) =>
+//                     item.id === updatedExpense.id ? data : item
+//                 );
+//             });
+    
+//             setEditingId(null);
+    
+//         } catch (error) {
+//             console.error(error);
+//         }
+//         finally{
+//             setIsEditing(false);
+//         }
+//     }, []); // It reads editingId, so editingId must be a dependency.
+// // Dependencies are determined by what the callback uses from its surrounding scope.
 
    
-    const [filterType, setFilterType] = useState("all");
-    const [filterCategory, setFilterCategory] = useState("all");
-    const [sortOption, setSortOption] = useState("default");
+//     const [filterType, setFilterType] = useState("all");
+//     const [filterCategory, setFilterCategory] = useState("all");
+//     const [sortOption, setSortOption] = useState("default");
    
 
-    const handleFilterTypeChange = useCallback((value) => {
-        setFilterType(value);
-    },[]);
+//     const handleFilterTypeChange = useCallback((value) => {
+//         setFilterType(value);
+//     },[]);
 
-    const handleFilterCategoryChange = useCallback((value) => {
-        setFilterCategory(value);
-    },[]);
+//     const handleFilterCategoryChange = useCallback((value) => {
+//         setFilterCategory(value);
+//     },[]);
 
-    const handleSortOptionChange = useCallback((value) => {
-        setSortOption(value);
-    }, []);
+//     const handleSortOptionChange = useCallback((value) => {
+//         setSortOption(value);
+//     }, []);
 
-    const handleSearchChange = useCallback((value) => {
-        setSearchTerm(value);
-    }, []);
+//     const handleSearchChange = useCallback((value) => {
+//         setSearchTerm(value);
+//     }, []);
 
-    const filteredExpenses = data.filter((item) => {
-        const typeMatches =
-            filterType === "all" || item.type === filterType;
+//     const filteredExpenses = data.filter((item) => {
+//         const typeMatches =
+//             filterType === "all" || item.type === filterType;
 
-        const categoryMatches =
-            filterCategory === "all" ||
-            item.category === filterCategory;
+//         const categoryMatches =
+//             filterCategory === "all" ||
+//             item.category === filterCategory;
 
        
 
-        return typeMatches && categoryMatches ;
-    });
+//         return typeMatches && categoryMatches ;
+//     });
 
 
-    const sortedExpenses = [...filteredExpenses]; // make a copy // because it will be modified by sort
+//     const sortedExpenses = [...filteredExpenses]; // make a copy // because it will be modified by sort
 
-    if (sortOption === "highest") {
-        sortedExpenses.sort((a, b) => b.amount - a.amount);
-    }
+//     if (sortOption === "highest") {
+//         sortedExpenses.sort((a, b) => b.amount - a.amount);
+//     }
 
-    if (sortOption === "lowest") {
-        sortedExpenses.sort((a, b) => a.amount - b.amount);
-    }
+//     if (sortOption === "lowest") {
+//         sortedExpenses.sort((a, b) => a.amount - b.amount);
+//     }
 
-    if (sortOption === "oldest") {
-        sortedExpenses.sort(
-            (a, b) => new Date(a.date) - new Date(b.date)
-        );
-    }
+//     if (sortOption === "oldest") {
+//         sortedExpenses.sort(
+//             (a, b) => new Date(a.date) - new Date(b.date)
+//         );
+//     }
 
-    if (sortOption === "newest") {
-        sortedExpenses.sort(
-            (a, b) => new Date(b.date) - new Date(a.date)
-        );
-    }
+//     if (sortOption === "newest") {
+//         sortedExpenses.sort(
+//             (a, b) => new Date(b.date) - new Date(a.date)
+//         );
+//     }
 
-    const totalIncome = useMemo(() => { 
-        return expenseList
-        .filter((item) => item.type === "income")
-        .reduce((total, item) => total + item.amount, 0);
-    }, [expenseList]);
+//     const totalIncome = useMemo(() => { 
+//         return expenseList
+//         .filter((item) => item.type === "income")
+//         .reduce((total, item) => total + item.amount, 0);
+//     }, [expenseList]);
 
-        const totalExpense = useMemo(() => {
-            return expenseList
-                .filter((item) => item.type === "expense")
-                .reduce((total, item) => total + item.amount, 0);
-        }, [expenseList]); //  totalExpense depend on expenseList so it is dependency of useMemo
+//         const totalExpense = useMemo(() => {
+//             return expenseList
+//                 .filter((item) => item.type === "expense")
+//                 .reduce((total, item) => total + item.amount, 0);
+//         }, [expenseList]); //  totalExpense depend on expenseList so it is dependency of useMemo
 
 
-    const totalBalance =useMemo(() => {
-        return   totalIncome - totalExpense;
-    }, [totalIncome, totalExpense]);// because totalBalance depend on totalIncome and totalExpense
+//     const totalBalance =useMemo(() => {
+//         return   totalIncome - totalExpense;
+//     }, [totalIncome, totalExpense]);// because totalBalance depend on totalIncome and totalExpense
   
 
+
+//     const numberOfExpenses = useMemo(() => {
+//         return expenseList
+//             .filter((item) => item.type === "expense")
+//             .length;
+//     },[expenseList]);
+  
+
+//     const averageOfExpenses = useMemo(() =>{
+//        return numberOfExpenses === 0
+//     ? 0
+//     :  expenseList
+//         .filter((item) => item.type === "expense")
+//         .reduce(
+//             (total, item) => total + item.amount,
+//             0
+//         ) / numberOfExpenses;
+// }, [numberOfExpenses, expenseList]);
+     
+
+//     const highestExpense = useMemo(() => {
+//         return expenseList
+//             .filter((item) => item.type === "expense")
+//             .reduce(
+//                 (max, item) => Math.max(max, item.amount),
+//                 0
+//             );
+//     } , [expenseList]);
+// //    This is exactly how you should think about useMemo: identify what the calculation actually reads, then put those values in the dependency array. 
+
+ 
+
+// const totalByCategory = useMemo(() => {
+//     const expensesByCategory = expenseList
+//         .filter((item) => item.type === "expense")
+//         .reduce((acc, item) => {
+//             if (!acc[item.category]) {
+//                 acc[item.category] = 0;
+//             }
+
+//             acc[item.category] += item.amount;
+
+//             return acc;
+//         }, {});
+          
+// //         This produces:
+
+// // {
+// //     Food: 2500,
+// //     Travel: 250,
+// //     Home: 7500
+// // }
+
+//     return Object.keys(expensesByCategory).map((category) => ({
+//         category,
+//         total: expensesByCategory[category]
+//     }));
+// }, [expenseList]);
+//     // Convert it into an array
+//     // Which produces:
+
+//     // [
+//     //     { category: "Food", total: 2500 },
+//     //     { category: "Travel", total: 250 },
+//     //     { category: "Home", total: 7500 }
+//     // ]
+
+// //     expenseList
+// //     ↓
+// // filter
+// //     ↓
+// // reduce → object
+// //     ↓
+// // Object.keys
+// //     ↓
+// // map
+// //     ↓
+// // final array
+  
+
+// return {
+
+//         // ou don't need to return setExpenseList anymore. That's an internal implementation detail of the hook.
+//         // state
+//         expenseList, // this is also a type of destructuring
+//         editingId,
+//         isAdding,
+//         // CRUD
+//         handleAddExpense,
+//         handleDelete,
+//         handleEdit,
+//         handleCancelEdit,
+//         handleSave,
+//         loading,
+//         error,
+//         // filters
+//         searchTerm,
+//         filterType,
+//         filterCategory,
+//         sortOption,
+//         handleSearchChange,
+//         handleFilterTypeChange,
+//         handleFilterCategoryChange,
+//         handleSortOptionChange,
+
+//         // data
+//         sortedExpenses,
+
+//         // analytics
+//         totalIncome,
+//         totalExpense,
+//         totalBalance,
+//         numberOfExpenses,
+//         averageOfExpenses,
+//         highestExpense,
+//         totalByCategory
+//     };
+//     // your entire CRUD state logic will be inside the custom hook
+// }
+
+// export default useExpenses
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { getExpenses , addExpense , deleteExpense , updateExpense} from "../api/expenseApi";
+
+const useExpenses = () => {
+    // -------------------------
+    // Expense state
+    // -------------------------
+
+    const [expenseList, setExpenseList] = useState([]);
+    const [editingId, setEditingId] = useState(null);
+
+    // -------------------------
+    // API states
+    // -------------------------
+
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [isAdding, setIsAdding] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
+    // -------------------------
+    // Filter / search / sort
+    // -------------------------
+
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filterType, setFilterType] = useState("all");
+    const [filterCategory, setFilterCategory] = useState("all");
+    const [sortOption, setSortOption] = useState("default");
+
+    // -------------------------
+    // Fetch expenses
+    // -------------------------
+
+    useEffect(() => {
+        const fetchExpenses = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                const data = await getExpenses();
+                setExpenseList(data);
+            } catch (error) {
+                setError(error.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchExpenses();
+    }, []);
+
+    // -------------------------
+    // Add expense
+    // -------------------------
+
+    const handleAddExpense = useCallback(async (newExpense) => {
+        setIsAdding(true);
+    
+        try {
+            const data = await addExpense(newExpense);
+    
+            setExpenseList((previousExpenses) => [
+                ...previousExpenses,
+                data
+            ]);
+        } catch (error) {
+            console.error(error);
+            setError(error.message);
+        } finally {
+            setIsAdding(false);
+        }
+    }, []);
+
+    // -------------------------
+    // Delete expense
+    // -------------------------
+
+    const handleDelete = useCallback(async (id) => {
+        setError(null);
+        setIsDeleting(true);
+        try {
+           const data = await deleteExpense(id);
+
+           setExpenseList(data);
+
+        } catch (error) {
+            console.error(error);
+            
+            setError(error.message);
+
+        } finally {
+            setIsDeleting(false);
+        }
+    }, []);
+
+    // -------------------------
+    // Edit
+    // -------------------------
+
+    const handleEdit = useCallback((id) => {
+        setEditingId(id);
+    }, []);
+
+    const handleCancelEdit = useCallback(() => {
+        setEditingId(null);
+    }, []);
+
+    // -------------------------
+    // Save updated expense
+    // -------------------------
+
+    const handleSave = useCallback(async (updatedExpense) => {
+        setError(null);
+        setIsUpdating(true);
+      try{
+        const data = await updateExpense(updatedExpense);
+
+        // setExpenseList(data); // this changes array into object and our filter /map finction will break
+        setExpenseList(previousExpenses =>
+            previousExpenses.map(item =>
+                item.id === updatedExpense.id
+                    ? data
+                    : item
+            )
+        );
+
+        setEditingId(null);
+
+      }
+      catch(error){
+        console.error(error);
+        
+        setError(error.message);
+
+      }
+      finally{
+        setIsUpdating(false);
+      }
+    }, []);
+
+    // -------------------------
+    // Filtering
+    // -------------------------
+
+    const filteredExpenses = useMemo(() => {
+        return expenseList.filter((item) => {
+            const typeMatches =
+                filterType === "all" || item.type === filterType;
+
+            const categoryMatches =
+                filterCategory === "all" ||
+                item.category === filterCategory;
+
+            return typeMatches && categoryMatches;
+        });
+    }, [expenseList, filterType, filterCategory]);
+
+    // -------------------------
+    // Sorting
+    // -------------------------
+
+    const sortedExpenses = useMemo(() => {
+        const result = [...filteredExpenses];
+
+        if (sortOption === "highest") {
+            result.sort((a, b) => b.amount - a.amount);
+        }
+
+        if (sortOption === "lowest") {
+            result.sort((a, b) => a.amount - b.amount);
+        }
+
+        if (sortOption === "oldest") {
+            result.sort(
+                (a, b) => new Date(a.date) - new Date(b.date)
+            );
+        }
+
+        if (sortOption === "newest") {
+            result.sort(
+                (a, b) => new Date(b.date) - new Date(a.date)
+            );
+        }
+
+        return result;
+    }, [filteredExpenses, sortOption]);
+
+    // -------------------------
+    // Analytics
+    // -------------------------
+
+    const totalExpense = useMemo(() => {
+        return expenseList
+            .filter((item) => item.type === "expense")
+            .reduce((total, item) => total + item.amount, 0);
+    }, [expenseList]);
+
+    const totalIncome = useMemo(() => {
+        return expenseList
+            .filter((item) => item.type === "income")
+            .reduce((total, item) => total + item.amount, 0);
+    }, [expenseList]);
+
+    const totalBalance = useMemo(() => {
+        return totalIncome - totalExpense;
+    }, [totalIncome, totalExpense]);
+    
 
     const numberOfExpenses = useMemo(() => {
         return expenseList
@@ -236,7 +666,6 @@ const handleDelete = useCallback(async (id) => {
 //    This is exactly how you should think about useMemo: identify what the calculation actually reads, then put those values in the dependency array. 
 
  
-
 const totalByCategory = useMemo(() => {
     const expensesByCategory = expenseList
         .filter((item) => item.type === "expense")
@@ -263,70 +692,53 @@ const totalByCategory = useMemo(() => {
         total: expensesByCategory[category]
     }));
 }, [expenseList]);
-    // Convert it into an array
-    // Which produces:
 
-    // [
-    //     { category: "Food", total: 2500 },
-    //     { category: "Travel", total: 250 },
-    //     { category: "Home", total: 7500 }
-    // ]
+    // -------------------------
+    // Return
+    // -------------------------
 
-//     expenseList
-//     ↓
-// filter
-//     ↓
-// reduce → object
-//     ↓
-// Object.keys
-//     ↓
-// map
-//     ↓
-// final array
-  
+    return {
+        expenseList,
+        sortedExpenses,
 
-return {
+        loading,
+        error,
+        isAdding,
+        isUpdating,
+        isDeleting,
 
-        // ou don't need to return setExpenseList anymore. That's an internal implementation detail of the hook.
-        // state
-        expenseList, // this is also a type of destructuring
         editingId,
 
-        // CRUD
-        handleAddExpense,
-        handleDelete,
-        handleEdit,
-        handleCancelEdit,
-        handleSave,
-
-        // filters
         searchTerm,
         filterType,
         filterCategory,
         sortOption,
-        handleSearchChange,
-        handleFilterTypeChange,
-        handleFilterCategoryChange,
-        handleSortOptionChange,
 
-        // data
-        sortedExpenses,
+        handleAddExpense,
+        handleDelete,
+        handleEdit,
+        handleSave,
+        handleCancelEdit,
 
-        // analytics
+        setSearchTerm,
+        setFilterType,
+        setFilterCategory,
+        setSortOption,
+
         totalIncome,
         totalExpense,
         totalBalance,
+
         numberOfExpenses,
         averageOfExpenses,
         highestExpense,
         totalByCategory
     };
-    // your entire CRUD state logic will be inside the custom hook
-}
+};
 
-export default useExpenses
-
+export default useExpenses;
 // What your architecture looks like now
+
 // App.jsx
 // │
 // │ useExpenses()

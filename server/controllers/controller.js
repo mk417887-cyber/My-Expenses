@@ -46,8 +46,13 @@ export const addExpense = (req, res) => {
         return res.status(400).json({ error: "Missing required fields" });
     }
 
+    const maxId = expenses.reduce((max, item) => {
+        
+        return Math.max(max, item.id);
+    }, 0);
+
     const newExpense = {
-        id: 
+        id: maxId + 1,
         title,
         amount: Number(amount),
         category,
@@ -58,4 +63,38 @@ export const addExpense = (req, res) => {
 
     res.status(201).json(newExpense);
 
+};
+
+export const updateExpense = (req, res) => {
+
+    const id = Number(req.params.id);
+
+    if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID" });
+    }
+
+    const expenseIndex = expenses.findIndex(
+        (item) => item.id === id
+    );
+
+    if (expenseIndex === -1) {
+        return res.status(404).json({ error: "Expense not found" });
+    }
+
+    const { title, amount, category, date, type } = req.body; 
+
+    if (!title || !amount || !category || !date || !type) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    expenses[expenseIndex] = {
+        ...expenses[expenseIndex], // Copy the existing expense
+        title,
+        amount: Number(amount),
+        category,
+        date,
+        type
+    };
+
+    res.json(expenses[expenseIndex]);
 };

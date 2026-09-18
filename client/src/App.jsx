@@ -369,13 +369,17 @@ const App = () => {
  
   const {
     editingId,
-
+    isAdding,
+    isDeleting,
+    isEditing,
     handleDelete,
     handleAddExpense,
     handleEdit,
     handleSave,
     handleCancelEdit,
 
+    error,
+    loading,
     searchTerm,
     filterType,
     filterCategory,
@@ -442,6 +446,7 @@ const App = () => {
 
       <AddExpense
         onAddExpense={handleAddExpense}
+        isAdding={isAdding}
       />
 
       <ExpenseList
@@ -459,6 +464,10 @@ const App = () => {
         editingId={editingId}
         handleCancelEdit={handleCancelEdit}
         handleSave={handleSave}
+        isDeleting={isDeleting}
+        isEditing={isEditing}
+        error={error}
+        loading={loading}
       />
     </div>
   );
