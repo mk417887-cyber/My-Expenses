@@ -47,7 +47,7 @@ export const addExpense = (req, res) => {
     }
 
     const newExpense = {
-        id: ,
+        id: 
         title,
         amount: Number(amount),
         category,
