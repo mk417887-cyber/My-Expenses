@@ -446,8 +446,8 @@ const useExpenses = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [isAdding, setIsAdding] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [isUpdating, setIsUpdating] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
+    const [updatingId , setUpdatingId] = useState(null);
     // -------------------------
     // Filter / search / sort
     // -------------------------
@@ -504,22 +504,23 @@ const useExpenses = () => {
     // -------------------------
     // Delete expense
     // -------------------------
-
     const handleDelete = useCallback(async (id) => {
         setError(null);
-        setIsDeleting(true);
+        // setIsDeleting(true);
+        setDeletingId(id);
+    
         try {
-           const data = await deleteExpense(id);
-
-           setExpenseList(data);
-
+            await deleteExpense(id);
+    
+            setExpenseList((previousExpenses) =>
+                previousExpenses.filter((item) => item._id !== id)
+            );
         } catch (error) {
             console.error(error);
-            
             setError(error.message);
-
         } finally {
-            setIsDeleting(false);
+            // setIsDeleting(false);
+            setDeletingId(null);
         }
     }, []);
 
@@ -541,14 +542,14 @@ const useExpenses = () => {
 
     const handleSave = useCallback(async (updatedExpense) => {
         setError(null);
-        setIsUpdating(true);
+        setUpdatingId(updatedExpense._id);
       try{
         const data = await updateExpense(updatedExpense);
 
         // setExpenseList(data); // this changes array into object and our filter /map finction will break
         setExpenseList(previousExpenses =>
             previousExpenses.map(item =>
-                item.id === updatedExpense.id
+                item._id === updatedExpense._id
                     ? data
                     : item
             )
@@ -564,7 +565,7 @@ const useExpenses = () => {
 
       }
       finally{
-        setIsUpdating(false);
+        setUpdatingId(null);
       }
     }, []);
 
@@ -704,8 +705,8 @@ const totalByCategory = useMemo(() => {
         loading,
         error,
         isAdding,
-        isUpdating,
-        isDeleting,
+        deletingId,
+        updatingId,
 
         editingId,
 

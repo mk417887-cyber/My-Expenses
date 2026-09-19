@@ -1,7 +1,14 @@
 import express from "express";
 import cors from "cors";
 import router from "./routes/routes.js";
+import { connectDB } from "./config/db.js";
+import dotenv from "dotenv";
+dotenv.config();
 
+connectDB();
+
+
+console.log(process.env.MONGO_URI);
 const app = express();
 
 app.use(cors());

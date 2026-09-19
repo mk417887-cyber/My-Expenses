@@ -1,6 +1,6 @@
 // import React from 'react'
 // import expenses from "./data.js"
-import { useState , memo} from "react";
+import { useState, memo } from "react";
 
 const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSave }) => {  // This is destructuring. of props
 
@@ -11,7 +11,7 @@ const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSav
     const [editCategory, setEditCategory] = useState(expense.category);
     const [editDate, setEditDate] = useState(expense.date);
     const [editType, setEditType] = useState(expense.type);
-    const [errors , setErrors] = useState(
+    const [errors, setErrors] = useState(
         {
             title: "",
             amount: "",
@@ -31,24 +31,24 @@ const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSav
         if (editTitle === "") {
             newErrors.title = "Title is required";
         }
-        
+
         if (editAmount === "" || Number(editAmount) <= 0) {
             newErrors.amount = "Amount must be greater than 0";
         }
-        
+
         if (editCategory === "") {
             newErrors.category = "Category is required";
         }
-        
+
         if (editDate === "") {
             newErrors.date = "Date is required";
         }
         setErrors(newErrors);
 
         const hasErrors = Object.values(newErrors).some( // asks:          "Is there at least one error that isn't an empty string?"
-             (error) => error !== "" 
-            );
-             return !hasErrors;
+            (error) => error !== ""
+        );
+        return !hasErrors;
     };
 
     const handleEditSubmit = (e) => {
@@ -93,15 +93,15 @@ const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSav
                             value={editTitle}
                             onChange={(e) => setEditTitle(e.target.value)}
                         />
-                            {errors.title && <p>{errors.title}</p>}  
-                            {/* // // / if errors.title = "Title is required" then show "Title is required" */}
+                        {errors.title && <p>{errors.title}</p>}
+                        {/* // // / if errors.title = "Title is required" then show "Title is required" */}
                         <input
                             type="number"
                             value={editAmount}
                             onChange={(e) => setEditAmount(e.target.value)}
                         />
-                            {errors.amount && <p>{errors.amount}</p>}
-                          {/* // Even with:
+                        {errors.amount && <p>{errors.amount}</p>}
+                        {/* // Even with:
             // type="number"
             // e.target.value is still a string.
             // We'll convert it to a number when saving. */}
@@ -110,13 +110,13 @@ const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSav
                             value={editCategory}
                             onChange={(e) => setEditCategory(e.target.value)}
                         />
-                            {errors.category && <p>{errors.category}</p>}
-                        <input 
-                        type="date"
-                        value={editDate}
-                        onChange={(e) => setEditDate(e.target.value)}
+                        {errors.category && <p>{errors.category}</p>}
+                        <input
+                            type="date"
+                            value={editDate}
+                            onChange={(e) => setEditDate(e.target.value)}
                         />
-                            {errors.date && <p>{errors.date}</p>}
+                        {errors.date && <p>{errors.date}</p>}
                         <select
                             value={editType}
                             onChange={(e) => setEditType(e.target.value)}
@@ -124,7 +124,7 @@ const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSav
                             <option value="expense">Expense</option>
                             <option value="income">Income</option>
                         </select>
-                      
+
                         <button type="submit">Save</button>
                         <button type="button" onClick={onCancelEdit}>
                             Cancel
@@ -135,19 +135,53 @@ const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSav
             ) : (
                 // NORMAL EXPENSE DISPLAY
                 <div>
-                    <h2>{expense.id}</h2>
-                    <h3>{expense.title}</h3>
-                    <p>{amount}</p>
-                    <p>{expense.category}</p>
-                    <p>{expense.date}</p>
-                    <p>{expense.type}</p>
-                    <p>{expense.type === "income" ? "Income" : "Expense"}</p>
-                    <button onClick={() => onDelete(expense.id)}>Delete</button>
-                    {/* //  Remember how Delete works: ExpenseItem  ↓onDelete(expense.id) ↓ App.handleDelete(id) ↓ setExpenseList(...) */}
+                    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-md transition hover:border-slate-700 hover:shadow-lg">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-                    <button onClick={() => onEdit(expense.id)}>
-                        Edit
-                    </button>
+                            {/* Left side */}
+                            <div>
+                                <h3 className="text-lg font-semibold text-white">
+                                    Title : {expense.title}
+                                </h3>
+
+                                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                                    <span className="rounded-full bg-slate-800 px-3 py-1 text-slate-300">
+                                        Category : {expense.category}
+                                    </span>
+
+                                    <span className="rounded-full bg-slate-800 px-3 py-1 text-slate-300">
+                                        Date is : {expense.date}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Right side */}
+                            <div className="flex items-center gap-4">
+
+                                <p className={`text-lg font-bold ${expense.type === "income"
+                                    ? "text-emerald-400"
+                                    : "text-red-400"
+                                    }`}>
+                                    {expense.type} : {expense.type === "income" ? "+" : "-"}₹{expense.amount}
+                                </p>
+
+                                {/* Edit button */}
+                                <button className="rounded-lg bg-indigo-500/10 px-3 py-2 text-sm font-medium text-indigo-400 transition hover:bg-indigo-500/20"
+                                    onClick={() => onEdit(expense._id)}>
+                                    Edit
+                                </button>
+
+                                {/* Delete button */}
+                                <button className="rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/20"
+                                    onClick={() => onDelete(expense._id)}>
+                                    Delete
+                                </button>
+
+                            </div>
+
+                        </div>
+                    </div>
+                   
                 </div>
             )}
 

@@ -7,10 +7,7 @@ const ExpenseSummary = ({
 }) => {
     return (
         <div>
-            ExpenseSummary --
-            <p>Number of Expenses: {numberOfExpenses}</p>
-            <p>Average Expense: {averageOfExpenses}</p>
-            <p>Highest Expense: {highestExpense}</p>
+          
             {totalByCategory.map((item) => {
                 return (
                     <div key={item.category}>

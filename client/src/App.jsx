@@ -363,15 +363,16 @@ import ExpenseFilters from "./components/ExpenseFilters.jsx";
 import ExpenseSummary from "./components/ExpenseSummary.jsx";
 import AddExpense from "./components/AddExpense.jsx";
 import ExpenseList from "./components/ExpenseList.jsx";
-import Users from "./components/Users.jsx";
 
 const App = () => {
- 
+
   const {
     editingId,
     isAdding,
-    isDeleting,
+    deletingId,
     isEditing,
+    updatingId,
+    
     handleDelete,
     handleAddExpense,
     handleEdit,
@@ -399,24 +400,52 @@ const App = () => {
     averageOfExpenses,
     highestExpense,
     totalByCategory
-} = useExpenses();
-// And App.jsx will basically become:
+  } = useExpenses();
+  // And App.jsx will basically become:
 
-// useExpenses()
-//       ↓
-// receive everything needed
-//       ↓
-// pass data to components
-//       ↓
-// render UI
+  // useExpenses()
+  //       ↓
+  // receive everything needed
+  //       ↓
+  // pass data to components
+  //       ↓
+  // render UI
 
-  
 
   return (
     <div>
+      {loading && (
+        <div className="flex justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-indigo-500"></div>
+        </div>
+      )}
+      {error && (
+        <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
+      )}
+      <Dashboard
+        totalIncome={totalIncome}
+        totalExpense={totalExpense}
+        totalBalance={totalBalance}
+        numberOfExpenses={numberOfExpenses}
+        averageOfExpenses={averageOfExpenses}
+        highestExpense={highestExpense}
+      />
+      <ExpenseSummary
+        numberOfExpenses={numberOfExpenses}
+        averageOfExpenses={averageOfExpenses}
+        highestExpense={highestExpense}
+        totalByCategory={totalByCategory}
+      />
 
-      <Users />
-      
+      {/* AddExpense */}
+      <AddExpense
+        onAddExpense={handleAddExpense}
+        isAdding={isAdding}
+      />
+
+      {/* Filters */}
       <ExpenseFilters
         filterType={filterType}
         filterCategory={filterCategory}
@@ -428,43 +457,26 @@ const App = () => {
         onSearchChange={handleSearchChange}
       />
 
-      <Dashboard
-        totalIncome={totalIncome}
-        totalExpense={totalExpense}
-        totalBalance={totalBalance}
-        numberOfExpenses={numberOfExpenses}
-        averageOfExpenses={averageOfExpenses}
-        highestExpense={highestExpense}
-      />
 
-      <ExpenseSummary
-        numberOfExpenses={numberOfExpenses}
-        averageOfExpenses={averageOfExpenses}
-        highestExpense={highestExpense}
-        totalByCategory={totalByCategory}
-      />
-
-      <AddExpense
-        onAddExpense={handleAddExpense}
-        isAdding={isAdding}
-      />
+      {/* ExpenseList */}
 
       <ExpenseList
         expenses={sortedExpenses} // these functions are being passed as props.  // Every time useExpenses() runs, JavaScript can create new function references: Previous render:
         // handleDelete → function A
         // Next render:
         // handleDelete → function B
-        
+
         // Even if the function's code hasn't changed, A and B are different function objects.
-        
+
         // This becomes important when using React.memo() on child components.    
 
         handleDelete={handleDelete}
         handleEdit={handleEdit}
         editingId={editingId}
+        updatingId={updatingId}
         handleCancelEdit={handleCancelEdit}
         handleSave={handleSave}
-        isDeleting={isDeleting}
+        deletingId={deletingId}
         isEditing={isEditing}
         error={error}
         loading={loading}
