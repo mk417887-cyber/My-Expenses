@@ -428,7 +428,7 @@
 
 // export default useExpenses
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { getExpenses , addExpense , deleteExpense , updateExpense} from "../api/expenseApi";
 
 const useExpenses = () => {
@@ -456,29 +456,110 @@ const useExpenses = () => {
     const [filterType, setFilterType] = useState("all");
     const [filterCategory, setFilterCategory] = useState("all");
     const [sortOption, setSortOption] = useState("default");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    // -------------------------
+    // Pages
+    //-------------------------
 
+    const [page, setPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+
+
+    //-------------------------
+    //Debouncing search 
+    //------------------------
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            
+        }, 500);
+    
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [searchTerm , filterType , filterCategory]);
+
+    useEffect(() => {
+        setPage(1);
+    },[searchTerm])
     // -------------------------
     // Fetch expenses
     // -------------------------
 
     useEffect(() => {
-        const fetchExpenses = async () => {
-            setLoading(true);
-            setError(null);
 
-            try {
-                const data = await getExpenses();
-                setExpenseList(data);
-            } catch (error) {
-                setError(error.message);
-            } finally {
-                setLoading(false);
-            }
-        };
+      
+            // do something after waiting
+            const fetchExpenses = async () => {
+                setLoading(true);
+                setError(null);
+        
+                try {
+                    const query = {}; 
+                    // Whenever the search/filter state changes, fetch expenses again from the backend with the new query parameters.
+        // We're going to add only the filters that the user has actually selected.
+        // example of query
+        // {
+        //     search: "food",
+        //     type: "expense",
+        //     category: "Food"
+        // }
+        if (debouncedSearch) {
+            query.search = debouncedSearch; 
+        }
+        
+                    if (filterType !== "all") {
+                        query.type = filterType;
+                    }
+        
+                    if (filterCategory !== "all") {
+                        query.category = filterCategory;
+                    }
+        
+                    const data = await getExpenses(query);
+    
+    // React filters
+    // ↓
+    // query parameters
+    // ↓
+    // Express
+    // ↓
+    // MongoDB
+    // ↓
+    // filtered expenses
+    // ↓
+    // React
+    // ↓
+    // UI
+    // This is server-side filtering/search.
+                    setExpenseList(data.data);
+                    setTotalPages(data.totalPages);
+                } catch (error) {
+                    setError(error.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+        
+            fetchExpenses();
+        },[debouncedSearch, filterType, filterCategory , page]);
 
-        fetchExpenses();
-    }, []);
+    // -------------------------
+    // Fetch analytics
+    // -------------------------
 
+
+    const handlePreviousPage = () => {
+        if (page > 1) {
+            setPage(page - 1);
+        }
+    };
+    
+    const handleNextPage = () => {
+        if (page < totalPages) {
+            setPage(page + 1);
+        }
+    };
     // -------------------------
     // Add expense
     // -------------------------
@@ -709,6 +790,10 @@ const totalByCategory = useMemo(() => {
         updatingId,
 
         editingId,
+        page,
+        totalPages,
+        handlePreviousPage,
+        handleNextPage,
 
         searchTerm,
         filterType,

@@ -15,6 +15,8 @@ app.use(cors());
 app.use(express.json()); // "If the client sends JSON, parse it and put the resulting object in req.body."
 
 app.use(router);
+app.use("/api/auth", router);
+
 
 app.listen(3001, () => {
     console.log("Server is running on port 3001");

@@ -399,7 +399,12 @@ const App = () => {
     numberOfExpenses,
     averageOfExpenses,
     highestExpense,
-    totalByCategory
+    totalByCategory,
+
+    page,
+    totalPages,
+    handlePreviousPage,
+    handleNextPage
   } = useExpenses();
   // And App.jsx will basically become:
 
@@ -480,6 +485,12 @@ const App = () => {
         isEditing={isEditing}
         error={error}
         loading={loading}
+
+        
+    page={page}
+    totalPages={totalPages}
+    handlePreviousPage={handlePreviousPage}
+    handleNextPage={handleNextPage}
       />
     </div>
   );

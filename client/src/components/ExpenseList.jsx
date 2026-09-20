@@ -1,6 +1,6 @@
 import ExpenseItem from "./ExpenseItem";
 
-const ExpenseList = ({ expenses, handleDelete, handleEdit, editingId, handleCancelEdit, handleSave , loading, error}) => {
+const ExpenseList = ({ expenses, handleDelete, handleEdit, editingId, handleCancelEdit, handleSave , loading, error , page, totalPages, handlePreviousPage, handleNextPage}) => {
 
   const Expenses = expenses.map((item) => {
     return (
@@ -44,6 +44,29 @@ const ExpenseList = ({ expenses, handleDelete, handleEdit, editingId, handleCanc
         {Expenses}
     </div>
 </section>
+<div className="flex items-center justify-center gap-4 py-6">
+
+    <button
+        onClick={handlePreviousPage}
+        disabled={page === 1}
+        className="rounded-lg bg-slate-800 px-4 py-2 disabled:cursor-not-allowed disabled:opacity-40"
+    >
+        Previous
+    </button>
+
+    <span>
+        Page {page} of {totalPages}
+    </span>
+
+    <button
+        onClick={handleNextPage}
+        disabled={page === totalPages}
+        className="rounded-lg bg-slate-800 px-4 py-2 disabled:cursor-not-allowed disabled:opacity-40"
+    >
+        Next
+    </button>
+
+</div>
     </div>
   )
 }

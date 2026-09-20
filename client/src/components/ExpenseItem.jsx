@@ -2,7 +2,7 @@
 // import expenses from "./data.js"
 import { useState, memo } from "react";
 
-const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSave }) => {  // This is destructuring. of props
+const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSave , deletingId }) => {  // This is destructuring. of props
 
     const amount = expense.type === "income" ? expense.amount : -1 * expense.amount;
 
@@ -11,6 +11,7 @@ const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSav
     const [editCategory, setEditCategory] = useState(expense.category);
     const [editDate, setEditDate] = useState(expense.date);
     const [editType, setEditType] = useState(expense.type);
+    const isDeleting = deletingId === expense._id;
     const [errors, setErrors] = useState(
         {
             title: "",
@@ -173,8 +174,9 @@ const ExpenseItem = ({ expense, onDelete, onEdit, isEditing, onCancelEdit, onSav
 
                                 {/* Delete button */}
                                 <button className="rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/20"
-                                    onClick={() => onDelete(expense._id)}>
-                                    Delete
+                                    onClick={() => onDelete(expense._id)                                     
+                                    } disabled={isDeleting}>
+                                   {isDeleting ? "Deleting..." : "Delete"}
                                 </button>
 
                             </div>
