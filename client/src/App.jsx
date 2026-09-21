@@ -357,142 +357,183 @@
 // }
 
 // export default App
-import useExpenses from "./hooks/useExpenses.js";
-import Dashboard from "./components/Dashboard.jsx";
-import ExpenseFilters from "./components/ExpenseFilters.jsx";
-import ExpenseSummary from "./components/ExpenseSummary.jsx";
-import AddExpense from "./components/AddExpense.jsx";
-import ExpenseList from "./components/ExpenseList.jsx";
+// import { Routes, Route } from "react-router-dom";
+
+// import Dashboard from "./Pages/Dashboard";
+// import Login from "./Pages/Login";
+// import Register from "./Pages/Register";
+
+// import useExpenses from "./hooks/useExpenses.js";
+// import Dashboard from "./components/Dashboard.jsx";
+// import ExpenseFilters from "./components/ExpenseFilters.jsx";
+// import ExpenseSummary from "./components/ExpenseSummary.jsx";
+// import AddExpense from "./components/AddExpense.jsx";
+// import ExpenseList from "./components/ExpenseList.jsx";
+// import Login from "./components/Login.jsx";
+// import Register from "./components/Register.jsx";
+
+// const App = () => {
+
+//   const {
+//     editingId,
+//     isAdding,
+//     deletingId,
+//     isEditing,
+//     updatingId,
+
+//     handleDelete,
+//     handleAddExpense,
+//     handleEdit,
+//     handleSave,
+//     handleCancelEdit,
+
+//     error,
+//     loading,
+//     searchTerm,
+//     filterType,
+//     filterCategory,
+//     sortOption,
+
+//     handleFilterTypeChange,
+//     handleFilterCategoryChange,
+//     handleSortOptionChange,
+//     handleSearchChange,
+
+//     sortedExpenses,
+
+//     totalIncome,
+//     totalExpense,
+//     totalBalance,
+//     numberOfExpenses,
+//     averageOfExpenses,
+//     highestExpense,
+//     totalByCategory,
+
+//     page,
+//     totalPages,
+//     handlePreviousPage,
+//     handleNextPage
+//   } = useExpenses();
+//   // And App.jsx will basically become:
+
+//   // useExpenses()
+//   //       ↓
+//   // receive everything needed
+//   //       ↓
+//   // pass data to components
+//   //       ↓
+//   // render UI
+
+
+//   return (
+//     <div>
+//       <Login />
+//       <Register />
+//       {loading && (
+//         <div className="flex justify-center py-12">
+//           <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-indigo-500"></div>
+//         </div>
+//       )}
+//       {error && (
+//         <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+//           {error}
+//         </div>
+//       )}
+//       <Dashboard
+//         totalIncome={totalIncome}
+//         totalExpense={totalExpense}
+//         totalBalance={totalBalance}
+//         numberOfExpenses={numberOfExpenses}
+//         averageOfExpenses={averageOfExpenses}
+//         highestExpense={highestExpense}
+//       />
+//       <ExpenseSummary
+//         numberOfExpenses={numberOfExpenses}
+//         averageOfExpenses={averageOfExpenses}
+//         highestExpense={highestExpense}
+//         totalByCategory={totalByCategory}
+//       />
+
+//       {/* AddExpense */}
+//       <AddExpense
+//         onAddExpense={handleAddExpense}
+//         isAdding={isAdding}
+//       />
+
+//       {/* Filters */}
+//       <ExpenseFilters
+//         filterType={filterType}
+//         filterCategory={filterCategory}
+//         sortOption={sortOption}
+//         searchTerm={searchTerm}
+//         onFilterTypeChange={handleFilterTypeChange}
+//         onFilterCategoryChange={handleFilterCategoryChange}
+//         onSortOptionChange={handleSortOptionChange}
+//         onSearchChange={handleSearchChange}
+//       />
+
+
+//       {/* ExpenseList */}
+
+//       <ExpenseList
+//         expenses={sortedExpenses} // these functions are being passed as props.  // Every time useExpenses() runs, JavaScript can create new function references: Previous render:
+//         // handleDelete → function A
+//         // Next render:
+//         // handleDelete → function B
+
+//         // Even if the function's code hasn't changed, A and B are different function objects.
+
+//         // This becomes important when using React.memo() on child components.    
+
+//         handleDelete={handleDelete}
+//         handleEdit={handleEdit}
+//         editingId={editingId}
+//         updatingId={updatingId}
+//         handleCancelEdit={handleCancelEdit}
+//         handleSave={handleSave}
+//         deletingId={deletingId}
+//         isEditing={isEditing}
+//         error={error}
+//         loading={loading}
+
+
+//     page={page}
+//     totalPages={totalPages}
+//     handlePreviousPage={handlePreviousPage}
+//     handleNextPage={handleNextPage}
+//       />
+//     </div>
+//   );
+// };
+
+// export default App;
+import { Routes, Route } from "react-router-dom";
+
+import Dashboard from "./Pages/Dashboard";
+import Login from "./Pages/Login";
+import Register from "./Pages/Register";
+import AppLayout from "./components/layout/AppLayout";
+import Expenses from "./Pages/Expenses";
+import AddExpense from "./Pages/AddExpense";
+import Profile from "./Pages/Profile";
+import EditExpense from "./Pages/EditExpense";
 
 const App = () => {
-
-  const {
-    editingId,
-    isAdding,
-    deletingId,
-    isEditing,
-    updatingId,
-    
-    handleDelete,
-    handleAddExpense,
-    handleEdit,
-    handleSave,
-    handleCancelEdit,
-
-    error,
-    loading,
-    searchTerm,
-    filterType,
-    filterCategory,
-    sortOption,
-
-    handleFilterTypeChange,
-    handleFilterCategoryChange,
-    handleSortOptionChange,
-    handleSearchChange,
-
-    sortedExpenses,
-
-    totalIncome,
-    totalExpense,
-    totalBalance,
-    numberOfExpenses,
-    averageOfExpenses,
-    highestExpense,
-    totalByCategory,
-
-    page,
-    totalPages,
-    handlePreviousPage,
-    handleNextPage
-  } = useExpenses();
-  // And App.jsx will basically become:
-
-  // useExpenses()
-  //       ↓
-  // receive everything needed
-  //       ↓
-  // pass data to components
-  //       ↓
-  // render UI
-
-
   return (
-    <div>
-      {loading && (
-        <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-indigo-500"></div>
-        </div>
-      )}
-      {error && (
-        <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-          {error}
-        </div>
-      )}
-      <Dashboard
-        totalIncome={totalIncome}
-        totalExpense={totalExpense}
-        totalBalance={totalBalance}
-        numberOfExpenses={numberOfExpenses}
-        averageOfExpenses={averageOfExpenses}
-        highestExpense={highestExpense}
-      />
-      <ExpenseSummary
-        numberOfExpenses={numberOfExpenses}
-        averageOfExpenses={averageOfExpenses}
-        highestExpense={highestExpense}
-        totalByCategory={totalByCategory}
-      />
+    <Routes>
+      {/* Public Pages */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
-      {/* AddExpense */}
-      <AddExpense
-        onAddExpense={handleAddExpense}
-        isAdding={isAdding}
-      />
-
-      {/* Filters */}
-      <ExpenseFilters
-        filterType={filterType}
-        filterCategory={filterCategory}
-        sortOption={sortOption}
-        searchTerm={searchTerm}
-        onFilterTypeChange={handleFilterTypeChange}
-        onFilterCategoryChange={handleFilterCategoryChange}
-        onSortOptionChange={handleSortOptionChange}
-        onSearchChange={handleSearchChange}
-      />
-
-
-      {/* ExpenseList */}
-
-      <ExpenseList
-        expenses={sortedExpenses} // these functions are being passed as props.  // Every time useExpenses() runs, JavaScript can create new function references: Previous render:
-        // handleDelete → function A
-        // Next render:
-        // handleDelete → function B
-
-        // Even if the function's code hasn't changed, A and B are different function objects.
-
-        // This becomes important when using React.memo() on child components.    
-
-        handleDelete={handleDelete}
-        handleEdit={handleEdit}
-        editingId={editingId}
-        updatingId={updatingId}
-        handleCancelEdit={handleCancelEdit}
-        handleSave={handleSave}
-        deletingId={deletingId}
-        isEditing={isEditing}
-        error={error}
-        loading={loading}
-
-        
-    page={page}
-    totalPages={totalPages}
-    handlePreviousPage={handlePreviousPage}
-    handleNextPage={handleNextPage}
-      />
-    </div>
+      {/* Application Pages */}
+      <Route element={<AppLayout />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/expenses" element={<Expenses />} />
+        <Route path="/expenses/:id/edit" element={<EditExpense />} />
+        <Route path="/expenses/add" element={<AddExpense />} />
+        <Route path="/profile" element={<Profile />} />
+      </Route>
+    </Routes>
   );
 };
 

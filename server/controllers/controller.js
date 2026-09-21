@@ -10,6 +10,7 @@ import mongoose from "mongoose";
 export const getExpenses = async (req, res) => {
 
     try {
+        console.log(req.user);
 
         console.log(req.query);
 
@@ -19,7 +20,9 @@ export const getExpenses = async (req, res) => {
         const pageNumber = Number(page) || 1; // page is is the raw URL value
         const limitNumber = Number(limit) || 10;
 
-        const query = {}; // empty query  object // Think of query as the instructions you are building for MongoDB.
+        const userId = req.user.id;
+
+        const query = { user: userId }; // empty query  object // Think of query as the instructions you are building for MongoDB.
         const skip = (pageNumber - 1) * limitNumber;
 
         if (search) {
@@ -55,6 +58,9 @@ export const getExpenses = async (req, res) => {
             limit: limitNumber,
             totalPages
         });
+
+        console.log(req.user);
+
     }
     catch (error) {
         console.error(error);
@@ -71,7 +77,11 @@ export const deleteExpense = async (req, res) => {
         if (!mongoose.isValidObjectId(id)) {
             return res.status(400).json({ error: "Invalid ID" });
         }
-        const response = await Expense.findByIdAndDelete(id);
+
+        const response = await Expense.findOneAndDelete({ // Find an expense whose _id is this ID AND whose user is the current logged-in user, then delete it.
+            _id: id,
+            user: req.user.id
+        });
 
         if (!response) {
             return res.status(404).json({ error: "Expense not found" });
@@ -110,8 +120,11 @@ export const addExpense = async (req, res) => {
         //     return Math.max(max, item.id);
         // }, 0);
 
+        const userId = req.user.id;
+
         const newExpense = new Expense({ // newExpense is a JavaScript object
             // id: id, // mongodb makes its own id
+            user: userId,
             title,
             amount: Number(amount),
             category,
@@ -159,7 +172,14 @@ export const updateExpense = async (req, res) => {
 
         const options = { new: true }; // this tells Mongoose to return the updated document
 
-        const response = await Expense.findByIdAndUpdate(id, updateData, options)
+        const response = await Expense.findOneAndUpdate(
+            {
+                _id: id,
+                user: req.user.id // who / what to find 
+            },
+            updateData, // what to change 
+            options// how to return 
+        );
         // expenses[expenseIndex] = {
         //     ...expenses[expenseIndex], // Copy the existing expense
         //     title,
@@ -178,5 +198,30 @@ export const updateExpense = async (req, res) => {
     catch (error) {
         console.error(error);
         return res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const getExpenseById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const expense = await Expense.findOne({
+            _id: id,
+            user: req.user.id,
+        });
+
+        if (!expense) {
+            return res.status(404).json({
+                error: "Expense not found",
+            });
+        }
+
+        res.status(200).json(expense);
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            error: "Failed to fetch expense",
+        });
     }
 };

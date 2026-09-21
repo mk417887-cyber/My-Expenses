@@ -428,8 +428,9 @@
 
 // export default useExpenses
 
-import { use, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getExpenses , addExpense , deleteExpense , updateExpense} from "../api/expenseApi";
+import toast from "react-hot-toast";
 
 const useExpenses = () => {
     // -------------------------
@@ -564,30 +565,37 @@ const [totalPages, setTotalPages] = useState(1);
     // Add expense
     // -------------------------
 
+ 
     const handleAddExpense = useCallback(async (newExpense) => {
         setIsAdding(true);
+        setError(null);
     
         try {
             const data = await addExpense(newExpense);
     
             setExpenseList((previousExpenses) => [
                 ...previousExpenses,
-                data
+                data,
             ]);
+    
+            toast.success("Expense added successfully");
+    
+            return true;
         } catch (error) {
             console.error(error);
             setError(error.message);
+            toast.error(error.message || "Failed to add expense");
+    
+            throw error;
         } finally {
             setIsAdding(false);
         }
     }, []);
-
     // -------------------------
     // Delete expense
     // -------------------------
     const handleDelete = useCallback(async (id) => {
         setError(null);
-        // setIsDeleting(true);
         setDeletingId(id);
     
         try {
@@ -596,11 +604,13 @@ const [totalPages, setTotalPages] = useState(1);
             setExpenseList((previousExpenses) =>
                 previousExpenses.filter((item) => item._id !== id)
             );
+    
+            toast.success("Expense deleted successfully");
         } catch (error) {
             console.error(error);
             setError(error.message);
+            toast.error(error.message || "Failed to delete expense");
         } finally {
-            // setIsDeleting(false);
             setDeletingId(null);
         }
     }, []);
@@ -620,34 +630,35 @@ const [totalPages, setTotalPages] = useState(1);
     // -------------------------
     // Save updated expense
     // -------------------------
-
     const handleSave = useCallback(async (updatedExpense) => {
         setError(null);
         setUpdatingId(updatedExpense._id);
-      try{
-        const data = await updateExpense(updatedExpense);
-
-        // setExpenseList(data); // this changes array into object and our filter /map finction will break
-        setExpenseList(previousExpenses =>
-            previousExpenses.map(item =>
-                item._id === updatedExpense._id
-                    ? data
-                    : item
-            )
-        );
-
-        setEditingId(null);
-
-      }
-      catch(error){
-        console.error(error);
-        
-        setError(error.message);
-
-      }
-      finally{
-        setUpdatingId(null);
-      }
+    
+        try {
+            const data = await updateExpense(updatedExpense);
+    
+            setExpenseList((previousExpenses) =>
+                previousExpenses.map((item) =>
+                    item._id === updatedExpense._id
+                        ? data
+                        : item
+                )
+            );
+    
+            setEditingId(null);
+    
+            toast.success("Expense updated successfully");
+    
+            return true;
+        } catch (error) {
+            console.error(error);
+            setError(error.message);
+            toast.error(error.message || "Failed to update expense");
+    
+            throw error;
+        } finally {
+            setUpdatingId(null);
+        }
     }, []);
 
     // -------------------------

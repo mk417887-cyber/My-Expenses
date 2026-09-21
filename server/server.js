@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import router from "./routes/routes.js";
+import authRouter from "./routes/authRoutes.js";
 import { connectDB } from "./config/db.js";
 import dotenv from "dotenv";
 dotenv.config();
@@ -14,9 +15,11 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // "If the client sends JSON, parse it and put the resulting object in req.body."
 
-app.use(router);
-app.use("/api/auth", router);
+// app.use(router);
+// app.use("/api/auth", router);
 
+app.use(router);
+app.use("/api/auth", authRouter);
 
 app.listen(3001, () => {
     console.log("Server is running on port 3001");

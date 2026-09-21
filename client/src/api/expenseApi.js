@@ -13,16 +13,24 @@ const handleResponse = async (response) => { // e your API layer now has one pla
 
     // 3. Throw a new Error containing
     //    the backend's error message.
-    throw new Error(error.error);
+    
+throw new Error(
+    error.error || error.message || "Something went wrong"
+);
 };
 
 export const getExpenses = async (query) => { // query is an array of key-value pairs // object
     try {
         const params = new URLSearchParams(query); // We need to convert that JavaScript object into URL query parameters:  like search=food&type=expense&category=Food
 
+        const token = localStorage.getItem("token");
 
         const response = await fetch(
-            `${API_BASE_URL}/api/expenses?${params.toString()}`);
+            `${API_BASE_URL}/api/expenses?${params.toString()}` ,{
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+    });
 
         // if (!response.ok) {
         //     throw new Error("Failed to fetch expenses");
@@ -43,15 +51,21 @@ export const getExpenses = async (query) => { // query is an array of key-value 
 
 export const addExpense = async (newExpense) => {
     try {
+        
+        const token = localStorage.getItem("token");
+
         const response = await fetch(
             `${API_BASE_URL}/api/expenses`,
             {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                     Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify(newExpense)
             }
+               
+            
         );
 
         // if (!response.ok) {
@@ -71,11 +85,17 @@ export const addExpense = async (newExpense) => {
 
 export const deleteExpense = async (id) => {
     try {
+
+        const token = localStorage.getItem("token");
+
         const response = await fetch(
             `${API_BASE_URL}/api/expenses/${id}`,
             {
-                method: "DELETE"
-            }
+                method: "DELETE",        
+            headers: {            
+                 Authorization: `Bearer ${token}`
+            },
+        }
         );
 
         // if (!response.ok) {
@@ -95,12 +115,16 @@ export const deleteExpense = async (id) => {
 
 export const updateExpense = async (updatedExpense) => {
     try {
+
+        const token = localStorage.getItem("token");
+
         const response = await fetch(
             `${API_BASE_URL}/api/expenses/${updatedExpense._id}`,
             {
                 method: "PUT",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                     Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify(updatedExpense)
             }
@@ -122,4 +146,24 @@ export const updateExpense = async (updatedExpense) => {
     }
 
 }
+
+export const getExpenseById = async (id) => {
+    try {
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(
+            `${API_BASE_URL}/api/expenses/${id}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return await handleResponse(response);
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+};
 

@@ -73,6 +73,7 @@ export const login = async (req, res) => {
 
         const isPasswordCorrect = await bcrypt.compare(password, user.password) // "Does this plain-text password correspond to this stored bcrypt hash?"
 
+        
         const token = jwt.sign(
             {
                 id: user._id, // payload
@@ -86,12 +87,14 @@ export const login = async (req, res) => {
         );// paylod -> info we want to include in the token // secret -> a secret key used to sign the token // options -> options for the token
 
 
+        
         if(!isPasswordCorrect){
             return res.status(401).json({
                 success: false,
                 message: "Invalid email or password",
             });
         }
+        
         else{
             return res.status(200).json({ // we are giving a HTTp response to frontend 
                 success: true,
