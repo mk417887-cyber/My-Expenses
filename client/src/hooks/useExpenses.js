@@ -480,70 +480,49 @@ const [totalPages, setTotalPages] = useState(1);
         };
     }, [searchTerm , filterType , filterCategory]);
 
-    useEffect(() => {
-        setPage(1);
-    },[searchTerm])
+
     // -------------------------
     // Fetch expenses
     // -------------------------
+    const fetchExpenses = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+    
+        try {
+            const query = {};
+    
+            query.page = page;
+            query.limit = 1;
+    
+            if (debouncedSearch) {
+                query.search = debouncedSearch;
+            }
+    
+            if (filterType !== "all") {
+                query.type = filterType;
+            }
+    
+            if (filterCategory !== "all") {
+                query.category = filterCategory;
+            }
+    
+            const data = await getExpenses(query);
+    
+            setExpenseList(data.data);
+            setTotalPages(data.totalPages);
+
+            return data;
+        } catch (error) {
+            setError(error.message);
+        } finally {
+            setLoading(false);
+        }
+    }, [debouncedSearch, filterType, filterCategory, page]);
+
 
     useEffect(() => {
-
-      
-            // do something after waiting
-            const fetchExpenses = async () => {
-                setLoading(true);
-                setError(null);
-        
-                try {
-                    const query = {}; 
-                    // Whenever the search/filter state changes, fetch expenses again from the backend with the new query parameters.
-        // We're going to add only the filters that the user has actually selected.
-        // example of query
-        // {
-        //     search: "food",
-        //     type: "expense",
-        //     category: "Food"
-        // }
-        if (debouncedSearch) {
-            query.search = debouncedSearch; 
-        }
-        
-                    if (filterType !== "all") {
-                        query.type = filterType;
-                    }
-        
-                    if (filterCategory !== "all") {
-                        query.category = filterCategory;
-                    }
-        
-                    const data = await getExpenses(query);
-    
-    // React filters
-    // ↓
-    // query parameters
-    // ↓
-    // Express
-    // ↓
-    // MongoDB
-    // ↓
-    // filtered expenses
-    // ↓
-    // React
-    // ↓
-    // UI
-    // This is server-side filtering/search.
-                    setExpenseList(data.data);
-                    setTotalPages(data.totalPages);
-                } catch (error) {
-                    setError(error.message);
-                } finally {
-                    setLoading(false);
-                }
-            };
-        
-            fetchExpenses();
-        },[debouncedSearch, filterType, filterCategory , page]);
+        fetchExpenses();
+    }, [fetchExpenses]);// Now fetchExpenses only changes when one of the values it actually depends on changes.
 
     // -------------------------
     // Fetch analytics
@@ -601,9 +580,11 @@ const [totalPages, setTotalPages] = useState(1);
         try {
             await deleteExpense(id);
     
-            setExpenseList((previousExpenses) =>
-                previousExpenses.filter((item) => item._id !== id)
-            );
+            const data = await fetchExpenses();
+    
+            if (page > data.totalPages && page > 1) {
+                setPage((previousPage) => previousPage - 1);
+            }
     
             toast.success("Expense deleted successfully");
         } catch (error) {
@@ -613,8 +594,7 @@ const [totalPages, setTotalPages] = useState(1);
         } finally {
             setDeletingId(null);
         }
-    }, []);
-
+    }, [fetchExpenses, page]);
     // -------------------------
     // Edit
     // -------------------------
@@ -786,6 +766,30 @@ const totalByCategory = useMemo(() => {
     }));
 }, [expenseList]);
 
+    //--------------------------
+    // Pagination on filtering // Wrapper functions
+    //--------------------------
+    const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    setPage(1);
+};
+
+
+
+const handleFilterTypeChange = (value) => {
+    setFilterType(value);
+    setPage(1);
+};
+
+const handleFilterCategoryChange = (value) => {
+    setFilterCategory(value);
+    setPage(1);
+};
+
+const handleSortOptionChange = (value) => {
+    setSortOption(value);
+    setPage(1);
+}
     // -------------------------
     // Return
     // -------------------------
@@ -817,10 +821,10 @@ const totalByCategory = useMemo(() => {
         handleSave,
         handleCancelEdit,
 
-        setSearchTerm,
-        setFilterType,
-        setFilterCategory,
-        setSortOption,
+        handleSearchChange,
+    handleFilterTypeChange,
+    handleFilterCategoryChange,
+    handleSortOptionChange,
 
         totalIncome,
         totalExpense,

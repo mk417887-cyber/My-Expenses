@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import useExpenses from "../hooks/useExpenses";
+import { useAuth } from "../context/AuthContext";
 
 const Dashboard = () => {
     const {
@@ -24,6 +25,11 @@ const Dashboard = () => {
         averageOfExpenses,
         highestExpense,
     } = useExpenses();
+
+    const { token, isAuthenticated } = useAuth();
+
+    console.log("is it authenticated",isAuthenticated);
+
 
     const stats = [
         {
@@ -246,11 +252,10 @@ const Dashboard = () => {
                                 </div>
 
                                 <p
-                                    className={`ml-4 whitespace-nowrap font-semibold ${
-                                        expense.type === "income"
+                                    className={`ml-4 whitespace-nowrap font-semibold ${expense.type === "income"
                                             ? "text-green-600"
                                             : "text-red-600"
-                                    }`}
+                                        }`}
                                 >
                                     {expense.type === "income" ? "+" : "-"}₹
                                     {Number(

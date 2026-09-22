@@ -5,46 +5,46 @@ const handleResponse = async (response) => { // e your API layer now has one pla
     // 1. If response is successful,
     //    return the parsed JSON data.
     if (response.ok) {
-        return await response.json();
+        return await response.json(); // Response ke body mein jo JSON data aaya hai, usko JavaScript object mein convert karo.
     }
-    // 2. If response is NOT successful,
-    //    read the JSON error from the backend.
     const error = await response.json();
 
-    // 3. Throw a new Error containing
-    //    the backend's error message.
+    if (response.status === 401) {
+        window.dispatchEvent(new Event("unauthorized")); // Browser mein ek event announce karo: "unauthorized".
     
-throw new Error(
-    error.error || error.message || "Something went wrong"
-);
+        const authError = new Error(
+            error.error || error.message || "Unauthorized"
+        );
+    
+        authError.status = 401;
+    
+        throw authError; // jis API ne request ki thi usko error milega
+    }
+    
+    throw new Error(
+        error.error || error.message || "Something went wrong"
+    );
+
 };
 
-export const getExpenses = async (query) => { // query is an array of key-value pairs // object
+export const getExpenses = async (query) => {
     try {
-        const params = new URLSearchParams(query); // We need to convert that JavaScript object into URL query parameters:  like search=food&type=expense&category=Food
+        const params = new URLSearchParams(query);
 
         const token = localStorage.getItem("token");
 
         const response = await fetch(
-            `${API_BASE_URL}/api/expenses?${params.toString()}` ,{
-            headers: {
-                Authorization: `Bearer ${token}`
+            `${API_BASE_URL}/api/expenses?${params.toString()}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             }
-    });
-
-        // if (!response.ok) {
-        //     throw new Error("Failed to fetch expenses");
-        // }
-
-        // const data = await response.json();
-
-        // return data;
+        );
 
         return await handleResponse(response);
-
-
     } catch (error) {
-        console.error(error); // catch the thrown error  and further throw it for frontend
+        console.error(error);
         throw error;
     }
 };

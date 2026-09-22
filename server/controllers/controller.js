@@ -23,6 +23,7 @@ export const getExpenses = async (req, res) => {
         const userId = req.user.id;
 
         const query = { user: userId }; // empty query  object // Think of query as the instructions you are building for MongoDB.
+
         const skip = (pageNumber - 1) * limitNumber;
 
         if (search) {
@@ -48,10 +49,11 @@ export const getExpenses = async (req, res) => {
         const totalPages = Math.ceil(total / limitNumber);
 
         const data = await Expense.find(query)////"Give me all documents from the Expense collection with that query"
+            .sort({ date: -1 })
             .skip(skip)
             .limit(limitNumber);
 
-        res.json({
+        res.json({ // sending the data to frontend
             data,
             total,
             page: pageNumber,

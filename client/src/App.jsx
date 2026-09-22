@@ -517,6 +517,8 @@ import Expenses from "./Pages/Expenses";
 import AddExpense from "./Pages/AddExpense";
 import Profile from "./Pages/Profile";
 import EditExpense from "./Pages/EditExpense";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 
 const App = () => {
   return (
@@ -526,12 +528,15 @@ const App = () => {
       <Route path="/register" element={<Register />} />
 
       {/* Application Pages */}
-      <Route element={<AppLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/expenses" element={<Expenses />} />
-        <Route path="/expenses/:id/edit" element={<EditExpense />} />
-        <Route path="/expenses/add" element={<AddExpense />} />
-        <Route path="/profile" element={<Profile />} />
+      <Route element={<ProtectedRoute />}> 
+      {/* // mtlb agr authenticated ho to hi yee pages pe jaa paoge */}
+        <Route element={<AppLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/expenses" element={<Expenses />} />
+          <Route path="/expenses/add" element={<AddExpense />} />
+          <Route path="/expenses/:id/edit" element={<EditExpense />} />
+          <Route path="/profile" element={<Profile />} />
+        </Route>
       </Route>
     </Routes>
   );

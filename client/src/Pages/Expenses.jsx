@@ -36,12 +36,11 @@ const Expenses = () => {
         filterType,
         filterCategory,
         sortOption,
-
-        setSearchTerm,
-        setFilterType,
-        setFilterCategory,
-        setSortOption,
-
+        handleSearchChange,
+        handleFilterTypeChange,
+        handleFilterCategoryChange,
+        handleSortOptionChange,
+        
         handleDelete,
     } = useExpenses();
 
@@ -82,7 +81,7 @@ const Expenses = () => {
                             type="text"
                             value={searchTerm}
                             onChange={(e) =>
-                                setSearchTerm(e.target.value)
+                                handleSearchChange(e.target.value)
                             }
                             placeholder="Search expenses..."
                             className="w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
@@ -93,7 +92,7 @@ const Expenses = () => {
                     <select
                         value={filterType}
                         onChange={(e) =>
-                            setFilterType(e.target.value)
+                            handleFilterTypeChange(e.target.value)
                         }
                         className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400"
                     >
@@ -106,7 +105,7 @@ const Expenses = () => {
                     <select
                         value={filterCategory}
                         onChange={(e) =>
-                            setFilterCategory(e.target.value)
+                            handleFilterCategoryChange(e.target.value)
                         }
                         className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400"
                     >
@@ -131,7 +130,7 @@ const Expenses = () => {
                         <select
                             value={sortOption}
                             onChange={(e) =>
-                                setSortOption(e.target.value)
+                                handleSortOptionChange(e.target.value)
                             }
                             className="w-full appearance-none rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-10 text-sm text-gray-700 outline-none focus:border-gray-400 lg:w-44"
                         >
@@ -342,24 +341,24 @@ const Expenses = () => {
                                 Next
                                 <ChevronRight size={17} />
                             </button>
-                          
+
                         </div>
                     )}
             </div>
             <DeleteConfirmModal
-                                isOpen={Boolean(expenseToDelete)}
-                                expense={expenseToDelete}
-                                onCancel={() => setExpenseToDelete(null)}
-                                onConfirm={async () => {
-                                    try {
-                                        await handleDelete(expenseToDelete._id);
-                                        setExpenseToDelete(null);
-                                    } catch (error) {
-                                        // Error toast is already handled inside useExpenses.
-                                    }
-                                }}
-                                isDeleting={deletingId === expenseToDelete?._id}
-                            />
+                isOpen={Boolean(expenseToDelete)}
+                expense={expenseToDelete}
+                onCancel={() => setExpenseToDelete(null)}
+                onConfirm={async () => {
+                    try {
+                        await handleDelete(expenseToDelete._id);
+                        setExpenseToDelete(null);
+                    } catch (error) {
+                        // Error toast is already handled inside useExpenses.
+                    }
+                }}
+                isDeleting={deletingId === expenseToDelete?._id}
+            />
         </div>
     );
 };

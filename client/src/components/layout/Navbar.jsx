@@ -1,7 +1,11 @@
 import { Link } from "react-router-dom";
 import { Bell, User, Menu, X } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
+
+    const { user } = useAuth();
+
     return (
         <nav className="sticky top-0 z-40 h-16 border-b border-gray-200 bg-white px-4 sm:px-6">
             <div className="flex h-full items-center justify-between">
@@ -42,10 +46,20 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                     {/* Profile */}
                     <Link
                         to="/profile"
-                        className="rounded-full p-2 transition hover:bg-gray-100"
-                        aria-label="Profile"
+                        className="flex items-center gap-3 rounded-lg px-2 py-1.5 transition hover:bg-gray-100"
                     >
-                        <User size={20} />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-900 text-sm font-semibold text-white">
+                            {user?.name?.charAt(0).toUpperCase()}
+                        </div>
+
+                        <div className="hidden sm:block">
+                            <p className="text-sm font-medium text-gray-900">
+                                {user?.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                                {user?.email}
+                            </p>
+                        </div>
                     </Link>
                 </div>
             </div>

@@ -24,6 +24,7 @@ const ExpenseForm = ({
     );
 
     const [errors, setErrors] = useState({});
+    
 
     const validate = () => {
         const newErrors = {};
@@ -32,7 +33,9 @@ const ExpenseForm = ({
             newErrors.title = "Title is required";
         }
 
-        if (!amount || Number(amount) <= 0) {
+        const numericAmount = Number(amount);
+
+        if (!amount || !Number.isFinite(numericAmount) || Number(amount) <= 0) {
             newErrors.amount = "Amount must be greater than 0";
         }
 
@@ -91,7 +94,16 @@ const ExpenseForm = ({
                     <input
                         type="text"
                         value={title}
-                        onChange={(e) => setTitle(e.target.value)}
+                        onChange={(e) => {
+                            setTitle(e.target.value);
+                        
+                            if (errors.title) {
+                                setErrors((previous) => ({ // setError me jo value thi use previouus khao aur new value me phle value to rkho hi bss title ko change kr do
+                                    ...previous, // spread opreator
+                                    title: "",
+                                }));
+                            }
+                        }}
                         placeholder="e.g. Grocery shopping"
                         className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
                     />
@@ -114,7 +126,17 @@ const ExpenseForm = ({
                         min="0"
                         step="0.01"
                         value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                      
+                        onChange={(e) => {
+                            setAmount(e.target.value);
+                        
+                            if (errors.amount) {
+                                setErrors((previous) => ({ // setError me jo value thi use previouus khao aur new value me phle value to rkho hi bss title ko change kr do
+                                    ...previous, // spread opreator
+                                    amount: "",
+                                }));
+                            }
+                        }}
                         placeholder="0.00"
                         className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
                     />
@@ -134,7 +156,16 @@ const ExpenseForm = ({
 
                     <select
                         value={type}
-                        onChange={(e) => setType(e.target.value)}
+                        onChange={(e) => {
+                            setType(e.target.value);
+                        
+                            if (errors.type) {
+                                setErrors((previous) => ({
+                                    ...previous,
+                                    type: "",
+                                }));
+                            }
+                        }}
                         className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
                     >
                         <option value="expense">Expense</option>
@@ -150,7 +181,16 @@ const ExpenseForm = ({
 
                     <select
                         value={category}
-                        onChange={(e) => setCategory(e.target.value)}
+                        onChange={(e) => {
+                            setCategory(e.target.value);
+                        
+                            if (errors.category) {
+                                setErrors((previous) => ({ // setError me jo value thi use previouus khao aur new value me phle value to rkho hi bss title ko change kr do
+                                    ...previous, // spread opreator
+                                    category: "",
+                                }));
+                            }
+                        }}
                         className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
                     >
                         <option value="">Select category</option>
@@ -180,7 +220,16 @@ const ExpenseForm = ({
                     <input
                         type="date"
                         value={date}
-                        onChange={(e) => setDate(e.target.value)}
+                        onChange={(e) => {
+                            setDate(e.target.value);
+                        
+                            if (errors.date) {
+                                setErrors((previous) => ({ // setError me jo value thi use previouus khao aur new value me phle value to rkho hi bss title ko change kr do
+                                    ...previous, // spread opreator
+                                    date: "",
+                                }));
+                            }
+                        }}
                         className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
                     />
 
