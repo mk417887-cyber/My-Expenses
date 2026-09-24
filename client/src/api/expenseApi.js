@@ -167,3 +167,42 @@ export const getExpenseById = async (id) => {
     }
 };
 
+export const getExpenseSummary = async () => {
+    try {
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(
+            `${API_BASE_URL}/api/expenses/summary`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return await handleResponse(response);
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+};
+
+export const getRecentExpenses = async () => {
+    try {
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(
+            `${API_BASE_URL}/api/expenses/recent`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return await handleResponse(response);
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+};

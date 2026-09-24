@@ -17,12 +17,15 @@ import { Link } from "react-router-dom";
 
 import useExpenses from "../hooks/useExpenses";
 
+import { useNavigate } from "react-router-dom";
+
 const Expenses = () => {
 
     const [expenseToDelete, setExpenseToDelete] = useState(null);
 
     const {
-        sortedExpenses,
+        expenseList,
+
         loading,
         error,
         deletingId,
@@ -43,6 +46,13 @@ const Expenses = () => {
         
         handleDelete,
     } = useExpenses();
+
+    
+    const navigate = useNavigate();
+
+    const navigateToRecent = () => {
+        navigate("/dashboard");
+    }
 
     return (
         <div className="p-6 lg:p-8">
@@ -169,6 +179,10 @@ const Expenses = () => {
                     <h2 className="font-semibold text-gray-900">
                         Transactions
                     </h2>
+                    
+                    <button  onClick={ navigateToRecent } className="mt-2 text-sm font-medium text-indigo-600 hover:underline border-amber-500">
+                            Recent Expenses
+                        </button>
 
                     <p className="mt-1 text-sm text-gray-500">
                         View and manage your transactions.
@@ -192,7 +206,7 @@ const Expenses = () => {
                             </div>
                         ))}
                     </div>
-                ) : sortedExpenses.length === 0 ? (
+                ) : expenseList.length === 0 ? (
                     /* Empty state */
                     <div className="px-6 py-16 text-center">
                         <Receipt
@@ -220,7 +234,7 @@ const Expenses = () => {
                 ) : (
                     /* Transactions */
                     <div className="divide-y divide-gray-100">
-                        {sortedExpenses.map((expense) => (
+                        {expenseList.map((expense) => (
                             <div
                                 key={expense._id}
                                 className="flex flex-col gap-4 px-6 py-5 transition hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between"
@@ -310,7 +324,7 @@ const Expenses = () => {
 
                 {/* Pagination */}
                 {!loading &&
-                    sortedExpenses.length > 0 &&
+                    expenseList.length > 0 &&
                     totalPages > 1 && (
                         <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4">
                             <button

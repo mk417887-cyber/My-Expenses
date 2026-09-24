@@ -227,3 +227,145 @@ export const getExpenseById = async (req, res) => {
         });
     }
 };
+
+export const getExpenseSummary = async (req, res) => {
+    try {
+        const userId = new mongoose.Types.ObjectId(req.user.id);
+
+        const summary = await Expense.aggregate([
+            {
+                $match: {
+                    user: userId
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+
+                    totalIncome: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ["$type", "income"] },
+                                "$amount",
+                                0
+                            ]
+                        }
+                    },
+
+                    totalExpense: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ["$type", "expense"] },
+                                "$amount",
+                                0
+                            ]
+                        }
+                    },
+
+                    numberOfExpenses: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ["$type", "expense"] }, // for every expense sum +1
+                                1,
+                                0
+                            ]
+                        }
+                    },
+
+                    averageExpense: {
+                        $avg: {
+                            $cond: [
+                                { $eq: ["$type", "expense"] },
+                                "$amount",
+                                null
+                            ]
+                        }
+                    },
+
+                    totalTransactions: { // for every transaction
+                        $sum: 1
+                    },
+
+                    highestExpense: {
+                        $max: {
+                            $cond: [
+                                { $eq: ["$type", "expense"] },
+                                "$amount",
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        ]);
+
+        const categorySummary = await Expense.aggregate([
+            {
+                $match: {
+                    user: userId,
+                    type: "expense",
+                },
+            },
+            {
+                $group: {
+                    _id: "$category",
+                    total: {
+                        $sum: "$amount",
+                    },
+                },
+            },
+        ]);
+
+        const totalByCategory = categorySummary.map((item) => ({
+            category: item._id,
+            total: item.total,
+        }));
+
+        const result = summary[0] || {
+            totalIncome: 0,
+            totalExpense: 0,
+            numberOfExpenses: 0,
+            averageExpense: 0,
+            highestExpense: 0,
+            totalTransactions: 0,
+        };
+        
+        const totalBalance =
+            result.totalIncome - result.totalExpense;
+        
+        return res.json({
+            totalIncome: result.totalIncome,
+            totalExpense: result.totalExpense,
+            totalBalance,
+            numberOfExpenses: result.numberOfExpenses,
+            totalTransactions: result.totalTransactions,
+            averageExpense: result.averageExpense,
+            highestExpense: result.highestExpense,
+            totalByCategory
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+};
+
+export const getRecentExpenses = async (req, res) => {
+    try {
+        const recentExpenses = await Expense.find({
+            user: req.user.id,
+        })
+            .sort({ date: -1, _id: -1 }) // means newest first
+            .limit(5);
+
+        return res.json(recentExpenses);
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            error: "Internal server error",
+        });
+    }
+};
