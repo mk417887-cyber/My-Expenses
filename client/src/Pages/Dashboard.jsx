@@ -31,8 +31,6 @@ const Dashboard = () => {
         totalByCategory,
     } = useExpenses();
 
-    console.log(totalByCategory);
-
     const navigate = useNavigate();
 
     const navigateToExpenses = () => {

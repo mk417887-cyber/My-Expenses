@@ -1,43 +1,3 @@
-
-// const Register = () => {
-//    
-
-//     return (
-//         <div>
-//          
-
-//             <form onSubmit={handleSubmit}>
-//                 <input
-//                     type="text"
-//                     placeholder="Enter name"
-//                     value={name}
-//                   
-//                 />
-
-//                 <input
-//                     type="email"
-//                     placeholder="Enter email"
-//                     value={email}
-//                     onChange={(e) => setEmail(e.target.value)}
-//                 />
-
-//                 <input
-//                     type="password"
-//                     placeholder="Enter password"
-//                     value={password}
-//                     onChange={(e) => setPassword(e.target.value)}
-//                 />
-
-//                 <button type="submit" disabled={loading}>
-//                     {loading ? "Registering..." : "Register"}
-//                 </button>
-//             </form>
-//         </div>
-//     );
-// };
-
-// export default Register;
-
 import {
     User,
     Mail,
@@ -53,6 +13,8 @@ import { useAuth } from "../context/AuthContext";
 
 const Register = () => {
 
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const { register } = useAuth();
 
@@ -66,11 +28,43 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        setLoading(true);
         setError("");
+
+        if (name.trim() === "" || email.trim() === "" || password.trim() === "" || confirmPassword.trim() === "") {
+            setError("All fields are required");
+            return;
+        }
+
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // regex for email
+
+        if (!emailPattern.test(email)) {
+            setError("Please enter a valid email address");
+            return;
+        }
+
+
+        if (
+            password.length < 6 ||
+            !/\d/.test(password) ||
+            !/[A-Za-z]/.test(password)
+        ) {
+            setError(
+                "Password must contain at least one letter and one number and be at least 6 characters long"
+            );
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError("Passwords do not match");
+            return;
+        }
+
+        setLoading(true);
 
         try {
             await register(name, email, password);
+
+
 
             navigate("/login", {
                 state: {
@@ -107,7 +101,7 @@ const Register = () => {
 
                     {/* Card */}
                     <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 shadow-2xl">
-                        <form className="space-y-5" onClick={handleSubmit}>
+                        <form className="space-y-5" onSubmit={handleSubmit}>
 
                             {/* Name */}
                             <div>
@@ -145,7 +139,7 @@ const Register = () => {
                                     <input
                                         type="email"
                                         placeholder="you@example.com"
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-3 pl-10 pr-4 text-sm text-white outline-none placeholder:text-zinc-600 transition focus:border-zinc-500"
                                     />
                                 </div>
@@ -164,22 +158,23 @@ const Register = () => {
                                     />
 
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         placeholder="Create a password"
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) => setPassword(e.target.value)}
                                         className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-3 pl-10 pr-11 text-sm text-white outline-none placeholder:text-zinc-600 transition focus:border-zinc-500"
                                     />
 
                                     <button
                                         type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
                                     >
                                         <Eye size={18} />
                                     </button>
                                 </div>
 
-                                <p className="mt-2 text-xs text-zinc-600">
-                                    Use at least 6 characters.
+                                <p className="mt-2 text-xs text-zinc-500">
+                                    At least 8 characters, including one letter and one number.
                                 </p>
                             </div>
 
@@ -197,6 +192,7 @@ const Register = () => {
 
                                     <input
                                         type="password"
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
                                         placeholder="Confirm your password"
                                         className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-3 pl-10 pr-4 text-sm text-white outline-none placeholder:text-zinc-600 transition focus:border-zinc-500"
                                     />
@@ -206,10 +202,12 @@ const Register = () => {
                             {/* Register */}
                             <button
                                 type="submit"
-                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-white py-3 text-sm font-semibold text-black transition hover:bg-zinc-200"
+                                disabled={loading}
+                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-white py-3 text-sm font-semibold text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                Create account
-                                <ArrowRight size={17} />
+                                {loading ? "Creating account..." : "Create account"}
+
+                                {!loading && <ArrowRight size={17} />}
                             </button>
                         </form>
 
