@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -9,7 +9,7 @@ export const register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
-        if (name.trim() === "" || email.trim() === "" || password.trim() === "" ) {
+        if (name.trim() === "" || email.trim() === "" || password.trim() === "") {
             return res.status(400).json({
                 success: false,
                 message: "Please fill all the fields",
@@ -104,6 +104,12 @@ export const login = async (req, res) => {
 
         const isPasswordCorrect = await bcrypt.compare(password, user.password) // "Does this plain-text password correspond to this stored bcrypt hash?"
 
+        if (!isPasswordCorrect) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password",
+            });
+        }
 
         const token = jwt.sign(
             {
@@ -113,30 +119,39 @@ export const login = async (req, res) => {
             },
             process.env.JWT_SECRET,//secret
             {
-                expiresIn: "100d"// options
+                expiresIn: process.env.JWT_EXPIRES_IN,// options
             }
         );// paylod -> info we want to include in the token // secret -> a secret key used to sign the token // options -> options for the token
 
 
+        const refreshToken = jwt.sign(
+            {
+                id: user._id,
+            },
+            process.env.REFRESH_TOKEN_SECRET,
+            {
+                expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
+            }
+        );
 
-        if (!isPasswordCorrect) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid email or password",
-            });
-        }
+        res.cookie("refreshToken", refreshToken, { // cookies me refreshToken respond kro as refreshToken 
+            httpOnly: true,// java cannot read cookie 
+            secure: process.env.NODE_ENV === "production", //  secure production mein HTTPS enforce karega, In production: HTTPS → cookie allowed , HTTP  → cookie not sent // uring local development, secure is false, so your http://localhost:3001 setup still works.
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // browser ko control karega ki cookie kab send karni hai. This controls when the browser sends the cookie in cross-site situations. // When frontend and backend are deployed on different sites/domains and we're using cross-site cookies, we'll need to configure SameSite=None together with Secure.
+            maxAge: 7 * 24 * 60 * 60 * 1000,// 7 days × 24 hours × 60 minutes × 60 seconds × 1000 ms browser keeps the cookies for exactly 7 days
+        });
 
-        else {
-            return res.status(200).json({ // we are giving a HTTp response to frontend 
-                success: true,
-                message: "Login successful",
-                token
-            });
-        }
+
+        return res.status(200).json({ // we are giving a HTTp response to frontend 
+            success: true,
+            message: "Login successful",
+            token
+        });
+
 
 
     }
-    catch {
+    catch (error) {
         console.error(error);
 
         return res.status(500).json({
@@ -145,3 +160,43 @@ export const login = async (req, res) => {
         });
     }
 }
+
+export const refresh = async (req, res) => { // jbb koi iise call kre to use naya token return krr do
+    try {
+        const refreshToken = req.cookies.refreshToken;
+
+        if (!refreshToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Refresh token missing",
+            });
+        }
+
+        const decoded = jwt.verify( // checks whether the refresh token was signed by our server , has'nt been modified , has'nt expired // f valid, decoded.id gives us the user's ID.
+            refreshToken,
+            process.env.REFRESH_TOKEN_SECRET // Browser se refreshToken cookie req.cookies.refreshToken ke through milegi. jwt.verify() usko REFRESH_TOKEN_SECRET se verify karega.
+        );
+
+        const token = jwt.sign( // naya token bana diya 
+            {
+                id: decoded.id,
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: process.env.JWT_EXPIRES_IN,
+            }
+        );
+
+        return res.status(200).json({
+            success: true,
+            token,
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(401).json({
+            success: false,
+            message: "Invalid or expired refresh token",
+        });
+    }
+};

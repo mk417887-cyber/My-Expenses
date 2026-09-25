@@ -1,27 +1,4 @@
 
-
-// const Login = () => {
-
-
-//     return (
-//         <div>
-
-//             <form onSubmit={handleSubmit} >
-//                 <input type="email" placeholder="Enter email" />
-//                 <input type="password" placeholder="Enter password" />
-//                 <button >Login</button>
-//             </form>
-//             not registered yet 
-//             <div>  <button >Register</button></div>
-
-//         </div>
-//     )
-// };
-
-// export default Login;
-
-
-
 import {
     Mail,
     Lock,
@@ -30,7 +7,7 @@ import {
     ArrowRight,
 } from "lucide-react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLocation } from "react-router-dom";
@@ -47,6 +24,7 @@ const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     const location = useLocation();
 
@@ -80,9 +58,12 @@ const Login = () => {
         <div>
 
             {error && (
-                <p className="text-sm text-red-600">
-                    {error}
-                </p>
+                <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300">
+                    <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-4 py-2 text-sm text-slate-700 shadow-lg shadow-slate-900/5 backdrop-blur-md">
+                        <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                        <p className="font-medium">{error}</p>
+                    </div>
+                </div>
             )}
             <div className="min-h-screen bg-zinc-200 text-white flex items-center justify-center px-4">
                 <div className="w-full max-w-md">
@@ -120,7 +101,7 @@ const Login = () => {
                                     <input
                                         type="email"
                                         placeholder="you@example.com"
-                                        value={email} onChange={(e) => setEmail(e.target.value)} 
+                                        value={email} onChange={(e) => setEmail(e.target.value)}
                                         className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-3 pl-10 pr-4 text-sm text-white outline-none placeholder:text-zinc-600 transition focus:border-zinc-500"
                                     />
                                 </div>
@@ -148,7 +129,7 @@ const Login = () => {
                                     />
 
                                     <input
-                                        type="password"
+                                       type={showPassword ? "text" : "password"}
                                         placeholder="••••••••"
                                         value={password} onChange={(e) => setPassword(e.target.value)}
                                         className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-3 pl-10 pr-11 text-sm text-white outline-none placeholder:text-zinc-600 transition focus:border-zinc-500"
@@ -156,6 +137,7 @@ const Login = () => {
 
                                     <button
                                         type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
                                     >
                                         <Eye size={18} />
@@ -189,7 +171,7 @@ const Login = () => {
                         <p className="mt-6 text-center text-sm text-zinc-500">
                             Don't have an account?{" "}
                             <a
-                                
+
                                 className="font-medium text-white hover:underline"
                                 onClick={toRegister}
                             >

@@ -1,5 +1,76 @@
 import { API_BASE_URL } from "./apiConfig";
 
+let refreshPromise = null;
+
+export const refreshAccessToken = async () => { //Ask the backend for a new access token and return it.
+    const response = await fetch(
+        `${API_BASE_URL}/api/auth/refresh`,
+        {
+            method: "POST",
+            credentials: "include", // Include the HttpOnly refreshToken cookie with this request.
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            data.message || "Unable to refresh access token"
+        );
+    }
+
+    return data.token; // the caller receives the new access token.
+};
+
+const handleAuthFailure = () => {
+    window.dispatchEvent(new Event("unauthorized"));
+};
+
+const requestWithAuth = async (url, options = {}) => {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            ...options.headers,
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (response.status !== 401) {
+        return response;
+    }
+
+    try {
+
+        if (!refreshPromise) { // in case of multiple requests at the same time
+            refreshPromise = refreshAccessToken().finally(() => { // is important because after the refresh finishes, we reset the variable so a future token expiry can start another refresh.
+                refreshPromise = null;
+            });
+        }
+
+        const newToken = await refreshPromise;
+
+        localStorage.setItem("token", newToken);
+
+        const retryResponse = await fetch(url, {
+            ...options,
+            headers: {
+                ...options.headers,
+                Authorization: `Bearer ${newToken}`,
+            },
+        });
+
+        if (retryResponse.status === 401) {
+            handleAuthFailure();
+        }
+
+        return retryResponse;
+    } catch (error) {
+        handleAuthFailure();
+        throw error;
+    }
+};
 
 const handleResponse = async (response) => { // e your API layer now has one place responsible for interpreting HTTP responses instead of duplicating that logic four times.
     // 1. If response is successful,
@@ -9,18 +80,16 @@ const handleResponse = async (response) => { // e your API layer now has one pla
     }
     const error = await response.json();
 
+
     if (response.status === 401) {
-        window.dispatchEvent(new Event("unauthorized")); // Browser mein ek event announce karo: "unauthorized".
-    
         const authError = new Error(
             error.error || error.message || "Unauthorized"
         );
-    
+
         authError.status = 401;
-    
-        throw authError; // jis API ne request ki thi usko error milega
+        throw authError;
     }
-    
+
     throw new Error(
         error.error || error.message || "Something went wrong"
     );
@@ -31,18 +100,12 @@ export const getExpenses = async (query) => {
     try {
         const params = new URLSearchParams(query);
 
-        const token = localStorage.getItem("token");
 
-        const response = await fetch(
-            `${API_BASE_URL}/api/expenses?${params.toString()}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
+        const response = await requestWithAuth(  // requestWithAuth() handles authentication/retry,
+            `${API_BASE_URL}/api/expenses?${params.toString()}`
         );
 
-        return await handleResponse(response);
+        return await handleResponse(response);  // handleResponse() handles interpreting the API response/error.
     } catch (error) {
         console.error(error);
         throw error;
@@ -51,21 +114,16 @@ export const getExpenses = async (query) => {
 
 export const addExpense = async (newExpense) => {
     try {
-        
-        const token = localStorage.getItem("token");
 
-        const response = await fetch(
+        const response = await requestWithAuth(
             `${API_BASE_URL}/api/expenses`,
             {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                     Authorization: `Bearer ${token}`
                 },
-                body: JSON.stringify(newExpense)
+                body: JSON.stringify(newExpense),
             }
-               
-            
         );
 
         // if (!response.ok) {
@@ -85,26 +143,12 @@ export const addExpense = async (newExpense) => {
 
 export const deleteExpense = async (id) => {
     try {
-
-        const token = localStorage.getItem("token");
-
-        const response = await fetch(
+        const response = await requestWithAuth(
             `${API_BASE_URL}/api/expenses/${id}`,
             {
-                method: "DELETE",        
-            headers: {            
-                 Authorization: `Bearer ${token}`
-            },
-        }
+                method: "DELETE",
+            }
         );
-
-        // if (!response.ok) {
-        //     throw new Error("Failed to delete expense");
-        // }
-
-        // const data = await response.json();
-
-        // return data;
 
         return await handleResponse(response);
     } catch (error) {
@@ -115,37 +159,23 @@ export const deleteExpense = async (id) => {
 
 export const updateExpense = async (updatedExpense) => {
     try {
-
-        const token = localStorage.getItem("token");
-
-        const response = await fetch(
+        const response = await requestWithAuth(
             `${API_BASE_URL}/api/expenses/${updatedExpense._id}`,
             {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                     Authorization: `Bearer ${token}`
                 },
-                body: JSON.stringify(updatedExpense)
+                body: JSON.stringify(updatedExpense),
             }
         );
 
-        //   if (!response.ok) {
-        //       throw new Error("Failed to update expense");
-        //   }
-
-        //   const data = await response.json();
-
-        //   return data;
-
         return await handleResponse(response);
-
     } catch (error) {
         console.error(error);
         throw error;
     }
-
-}
+};
 
 export const getExpenseById = async (id) => {
     try {
@@ -169,15 +199,8 @@ export const getExpenseById = async (id) => {
 
 export const getExpenseSummary = async () => {
     try {
-        const token = localStorage.getItem("token");
-
-        const response = await fetch(
-            `${API_BASE_URL}/api/expenses/summary`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
+        const response = await requestWithAuth(
+            `${API_BASE_URL}/api/expenses/summary`
         );
 
         return await handleResponse(response);
@@ -189,15 +212,8 @@ export const getExpenseSummary = async () => {
 
 export const getRecentExpenses = async () => {
     try {
-        const token = localStorage.getItem("token");
-
-        const response = await fetch(
-            `${API_BASE_URL}/api/expenses/recent`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
+        const response = await requestWithAuth(
+            `${API_BASE_URL}/api/expenses/recent`
         );
 
         return await handleResponse(response);

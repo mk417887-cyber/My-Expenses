@@ -98,7 +98,7 @@ const useExpenses = () => {
         try {
             const query = {
                 page,
-                limit: 10,
+                limit: 2,
             };
 
             if (debouncedSearch) {

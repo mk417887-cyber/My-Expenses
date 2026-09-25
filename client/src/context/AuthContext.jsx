@@ -73,6 +73,7 @@ export const AuthProvider = ({ children }) => {
             `${import.meta.env.VITE_API_BASE_URL}/api/auth/login`,
             {
                 method: "POST",
+                credentials: "include", // When making this request, allow cookies to be received from the backend and included in future requests."
                 headers: {
                     "Content-Type": "application/json",
                 },

@@ -267,12 +267,13 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
                 <div className="border-t border-slate-100 pt-4">
                     <button
                         onClick={logoutHandler}
-                        className="group flex w-full items-center gap-3.5 rounded-xl px-3.5 py-2.5 text-sm font-medium text-rose-600 transition-all duration-200 hover:bg-rose-50/80 hover:text-rose-700 active:scale-[0.98]"
+                        className="group flex w-full items-center gap-3.5 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-500 transition-all duration-200 hover:bg-slate-200 hover:text-slate-900 active:scale-[0.98]"
                     >                      
                         <LogOut
                             size={19}
-                            className="text-rose-500 transition-transform cursor-pointerduration-200 group-hover:-translate-x-0.5 group-hover:text-rose-600"
+                            className="text-slate-500 transition-transform cursor-pointer duration-200 group-hover:-translate-x-0.5 group-hover:text-slate-800"
                         />
+                        Logout
                         
                     </button>
                 </div>

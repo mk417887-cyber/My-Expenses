@@ -4,21 +4,34 @@
 // processing data
 // sending res
 
+const escapeRegex = (value) => {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // It converts regex-special characters into literal characters. meaning a\+b → literal "a+b"
+};
+
 import Expense from "../models/Expense.js";
 import mongoose from "mongoose";
 
 export const getExpenses = async (req, res) => {
 
     try {
-        console.log(req.user);
-
-        console.log(req.query);
 
         const { search, type, category, page, limit } = req.query; // remember req.query values are strings
 
 
-        const pageNumber = Number(page) || 1; // page is is the raw URL value
-        const limitNumber = Number(limit) || 10;
+        const parsedPage = Number(page);
+        const parsedLimit = Number(limit);
+
+        const pageNumber =
+            Number.isInteger(parsedPage) && parsedPage >= 1
+                ? parsedPage
+                : 1;
+
+        const limitNumber =
+            Number.isInteger(parsedLimit) &&
+                parsedLimit >= 1 &&
+                parsedLimit <= 100
+                ? parsedLimit
+                : 10;
 
         const userId = req.user.id;
 
@@ -28,7 +41,7 @@ export const getExpenses = async (req, res) => {
 
         if (search) {
             query.title = {
-                $regex: search,
+                $regex: escapeRegex(search),
                 $options: "i" // "i" means case-insensitive
             };
 
@@ -61,7 +74,6 @@ export const getExpenses = async (req, res) => {
             totalPages
         });
 
-        console.log(req.user);
 
     }
     catch (error) {
@@ -112,9 +124,56 @@ export const addExpense = async (req, res) => {
 
     try {
         const { title, amount, category, date, type } = req.body; // Getting  the new expense from req.body as frontend sends it to backend // You're destructuring the data coming from the frontend.
+        
+                if (!title || !category || !date || !type || amount === undefined) {
+                    return res.status(400).json({ error: "Missing required fields" });
+                }
 
-        if (!title || !amount || !category || !date || !type) {
-            return res.status(400).json({ error: "Missing required fields" });
+        const trimmedTitle = title.trim();
+
+        if (trimmedTitle.length < 1 || trimmedTitle.length > 100) {
+            return res.status(400).json({
+                error: "Title must be between 1 and 100 characters"
+            });
+        }
+
+        const numericAmount = Number(amount);
+
+        if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+            return res.status(400).json({
+                error: "Amount must be a valid positive number"
+            });
+        }
+
+        const allowedCategories = [
+            "Food",
+            "Travel",
+            "Entertainment",
+            "Other",
+            "Education",
+            "Health",
+        ];
+
+        if (!allowedCategories.includes(category)) {
+            return res.status(400).json({
+                error: "Invalid category"
+            });
+        }
+
+        const allowedTypes = ["income", "expense"];
+
+        if (!allowedTypes.includes(type)) {
+            return res.status(400).json({
+                error: "Invalid expense type"
+            });
+        }
+
+        const expenseDate = new Date(date);
+
+        if (Number.isNaN(expenseDate.getTime())) {
+            return res.status(400).json({
+                error: "Invalid date"
+            });
         }
 
         // const maxId = expenses.reduce((max, item) => {
@@ -122,15 +181,15 @@ export const addExpense = async (req, res) => {
         //     return Math.max(max, item.id);
         // }, 0);
 
-        const userId = req.user.id;
+        const userId = req.user.id;// comes from verified jwt
 
         const newExpense = new Expense({ // newExpense is a JavaScript object
             // id: id, // mongodb makes its own id
             user: userId,
-            title,
-            amount: Number(amount),
+            title: trimmedTitle,
+            amount: numericAmount,
             category,
-            date,
+            date: expenseDate,
             type
         });
 
@@ -329,10 +388,10 @@ export const getExpenseSummary = async (req, res) => {
             highestExpense: 0,
             totalTransactions: 0,
         };
-        
+
         const totalBalance =
             result.totalIncome - result.totalExpense;
-        
+
         return res.json({
             totalIncome: result.totalIncome,
             totalExpense: result.totalExpense,
