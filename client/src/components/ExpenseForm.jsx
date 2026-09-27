@@ -24,27 +24,37 @@ const ExpenseForm = ({
     );
 
     const [errors, setErrors] = useState({});
-    
+
 
     const validate = () => {
         const newErrors = {};
 
         if (!title.trim()) {
             newErrors.title = "Title is required";
+        } else if (title.trim().length > 100) {
+            newErrors.title = "Title cannot exceed 100 characters";
         }
-
         const numericAmount = Number(amount);
 
-        if (!amount || !Number.isFinite(numericAmount) || Number(amount) <= 0) {
+        if (
+            amount === "" ||
+            !Number.isFinite(numericAmount) ||
+            numericAmount <= 0
+        ) {
             newErrors.amount = "Amount must be greater than 0";
         }
 
         if (!category) {
             newErrors.category = "Please select a category";
         }
-
         if (!date) {
             newErrors.date = "Please select a date";
+        } else {
+            const selectedDate = new Date(date);
+
+            if (Number.isNaN(selectedDate.getTime())) {
+                newErrors.date = "Please select a valid date";
+            }
         }
 
         setErrors(newErrors);
@@ -96,7 +106,7 @@ const ExpenseForm = ({
                         value={title}
                         onChange={(e) => {
                             setTitle(e.target.value);
-                        
+
                             if (errors.title) {
                                 setErrors((previous) => ({ // setError me jo value thi use previouus khao aur new value me phle value to rkho hi bss title ko change kr do
                                     ...previous, // spread opreator
@@ -126,10 +136,10 @@ const ExpenseForm = ({
                         min="0"
                         step="0.01"
                         value={amount}
-                      
+
                         onChange={(e) => {
                             setAmount(e.target.value);
-                        
+
                             if (errors.amount) {
                                 setErrors((previous) => ({ // setError me jo value thi use previouus khao aur new value me phle value to rkho hi bss title ko change kr do
                                     ...previous, // spread opreator
@@ -158,7 +168,7 @@ const ExpenseForm = ({
                         value={type}
                         onChange={(e) => {
                             setType(e.target.value);
-                        
+
                             if (errors.type) {
                                 setErrors((previous) => ({
                                     ...previous,
@@ -183,7 +193,7 @@ const ExpenseForm = ({
                         value={category}
                         onChange={(e) => {
                             setCategory(e.target.value);
-                        
+
                             if (errors.category) {
                                 setErrors((previous) => ({ // setError me jo value thi use previouus khao aur new value me phle value to rkho hi bss title ko change kr do
                                     ...previous, // spread opreator
@@ -222,7 +232,7 @@ const ExpenseForm = ({
                         value={date}
                         onChange={(e) => {
                             setDate(e.target.value);
-                        
+
                             if (errors.date) {
                                 setErrors((previous) => ({ // setError me jo value thi use previouus khao aur new value me phle value to rkho hi bss title ko change kr do
                                     ...previous, // spread opreator

@@ -1,137 +1,394 @@
+import Expense from "../models/Expense.js";
+// Imports the Expense Mongoose model.
+// The model is used to create, find, update, and delete expense documents
+// in the MongoDB Expense collection.
 
-import Expense from "../models/Expense.js"; // importing the schema of mongoose
-import mongoose from "mongoose"; // importing the mongoose library
+import mongoose from "mongoose";
+// Imports the Mongoose library.
+// We use it here mainly to validate MongoDB ObjectId values.
 
 
-const escapeRegex = (value) => { // What does it do??
-    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // It converts regex-special characters into literal characters. meaning a\+b → literal "a+b"
+const escapeRegex = (value) => {
+    // Takes a string and escapes characters that have special meaning in Regex.
+    // This makes the user's search text behave like normal text
+    // instead of being interpreted as a Regex expression.
+
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Finds Regex-special characters in the input and adds "\" before them.
+    // Example: "a+b" becomes "a\+b", so "+" is treated as a literal character.
 };
 
-export const getExpenses = async (req, res) => { // making a async function which gives us the expenses
+
+
+export const getExpenses = async (req, res) => {
+    // Controller responsible for getting expenses belonging to the logged-in user.
+    // It is async because it performs database operations using await.
 
     try {
 
-        const { search, type, category, page, limit } = req.query; // remember req.query values are strings // req.query is an object parsed by express previously
-        // now we are destructring it meaning we are assigning the values to these variables
+        const { search, type, category, page, limit } = req.query;
+        // req.query contains values provided in the URL's query string.
+        // Example:
+        // /api/expenses?search=food&type=expense&page=2&limit=10
+        //
+        // req.query would approximately be:
+        // {
+        //     search: "food",
+        //     type: "expense",
+        //     category: "...",
+        //     page: "2",
+        //     limit: "10"
+        // }
+        //
+        // Query-string values are received as strings.
+        // Destructuring extracts the required values into separate variables.
 
 
-        const parsedPage = Number(page); // converting it to a number as it is a string in req.query
-        const parsedLimit = Number(limit); // converting it to a number
 
-        const pageNumber =  // if it is a number and it is greater than or equal to 1 then page number is equal to parsedPage else 1
-            Number.isInteger(parsedPage) && parsedPage >= 1 
+        const parsedPage = Number(page);
+        // Converts page from a string to a number.
+        // Example: "2" → 2.
+
+        const parsedLimit = Number(limit);
+        // Converts limit from a string to a number.
+        // Example: "10" → 10.
+
+
+
+        const pageNumber =
+            // If parsedPage is an integer and is >= 1,
+            // use it; otherwise use 1 as the default page.
+
+            Number.isInteger(parsedPage) && parsedPage >= 1
                 ? parsedPage
                 : 1;
 
-        const limitNumber = // if it is a number and it is between 1 and 100 then limit number is equal to parsedLimit else 10
+
+
+        const limitNumber =
+            // If parsedLimit is an integer between 1 and 100,
+            // use it; otherwise use 10 as the default limit.
+
             Number.isInteger(parsedLimit) &&
                 parsedLimit >= 1 &&
                 parsedLimit <= 100
                 ? parsedLimit
                 : 10;
 
-        const userId = req.user.id; // getting the user id from req.user object in  userId
- 
-        const query = { user: userId }; // it is an object // Think of query as the instructions you are building for MongoDB. // it contains a key user and value userId
 
-        const skip = (pageNumber - 1) * limitNumber; //  skiping page number calculations 
 
-        if (search) { // if search is present then query will be updated and search will be added as query title // "Give me all documents from the Expense collection with that query title"
+        const userId = req.user.id;
+        // Gets the ID of the currently authenticated user.
+        // req.user is created/populated by the protect middleware
+        // after successfully verifying the user's JWT.
+
+
+
+        const query = { user: userId };
+        // Creates the initial MongoDB query.
+        // It tells MongoDB:
+        // "Only return expenses whose user field matches this logged-in user."
+
+
+
+        const skip = (pageNumber - 1) * limitNumber;
+        // Calculates how many documents should be skipped for pagination.
+        //
+        // Example:
+        // page = 1, limit = 10 → skip 0
+        // page = 2, limit = 10 → skip 10
+        // page = 3, limit = 10 → skip 20
+
+
+
+        if (search) {
+            // If the user provided a search value,
+            // add a title-search condition to the MongoDB query.
+
             query.title = {
                 $regex: escapeRegex(search),
-                $options: "i" // "i" means case-insensitive
+                // Searches the title using Regex.
+                // escapeRegex() makes the user's search text literal
+                // instead of allowing Regex-special characters to act as operators.
+
+                $options: "i"
+                // "i" means case-insensitive.
+                // Example: "food", "Food", and "FOOD" can match.
             };
-
         }
 
-        if (type) { // if type exists then query will be updated and type will be added in query
-            query.type = type; 
 
+
+        if (type) {
+            // If a type was provided, add it to the MongoDB query.
+            // Example: type = "expense"
+
+            query.type = type;
         }
+
+
 
         if (category) {
+            // If a category was provided, add it to the MongoDB query.
+            // Example: category = "Food"
+
             query.category = category;
-
         }
 
-        const total = await Expense.countDocuments(query); // counting the matching documents with query keys 
 
-        const totalPages = Math.ceil(total / limitNumber); 
 
-        const data = await Expense.find(query)////"Give me all documents from the Expense collection with that query"
-            .sort({ date: -1 }) // sorting the dcuments in descending order
-            .skip(skip) // skipping the documents that are not required
-            .limit(limitNumber); // limit the documents to limitNumber
+        const total = await Expense.countDocuments(query);
+        // Counts how many documents match the complete query.
+        // This is used to calculate pagination information.
+        //
+        // For example, if there are 47 matching expenses,
+        // total will be 47.
 
-        res.json({ // sending the data to frontend as array object
+
+
+        const totalPages = Math.ceil(total / limitNumber);
+        // Calculates the total number of pages.
+        //
+        // Example:
+        // total = 47
+        // limit = 10
+        // totalPages = Math.ceil(47 / 10) = 5
+
+
+
+        const data = await Expense.find(query)
+            // Finds all Expense documents matching the query.
+            //
+            // The query may contain:
+            // user
+            // search/title
+            // type
+            // category
+
+            .sort({ date: -1 })
+            // Sorts the matching expenses by date.
+            // -1 means descending order, so newest dates appear first.
+            // 1 would mean ascending order.
+
+            .skip(skip)
+            // Skips the number of documents calculated for pagination.
+
+            .limit(limitNumber);
+        // Limits the number of documents returned for this page.
+
+
+
+        res.json({
+            // Sends a JSON response back to the frontend.
+
             data,
+            // The expenses returned for the current page.
+
             total,
+            // Total number of matching expenses.
+
             page: pageNumber,
+            // Current page number.
+
             limit: limitNumber,
+            // Number of expenses returned per page.
+
             totalPages
+            // Total number of pages available.
         });
 
 
-    } 
-    catch (error) {  // catch the error if any 
-        console.error(error);
-        return res.status(500).json({ error: "Internal server error" }); // send the error to frontend as json
-    }
-
-};
-
-export const deleteExpense = async (req, res) => { 
-    try { 
-        const id = req.params.id; // getting the id from req.params as req.params returns ???
-
-
-        if (!mongoose.isValidObjectId(id)) { // checking if the id is valid and exists in mongoose
-            return res.status(400).json({ error: "Invalid ID" }); // send the error to frontend in ?? format
-        }
-
-        const response = await Expense.findOneAndDelete({ // Find an expense whose _id is this ID AND whose user is the current logged-in user, then delete it.
-            _id: id, // delete this expense from the database
-            user: req.user.id // belonging to this user only
-        });
-
-        if (!response) { // if the expense is not found then return with status code 404 
-            return res.status(404).json({ error: "Expense not found" });
-        }
-        res.json(response); // if expense found then send it to frontend 
 
     }
+
     catch (error) {
+        // If any unexpected error occurs while processing the request,
+        // execution comes here.
+
         console.error(error);
-        return res.status(500).json({ error: "Internal server error" });
+        // Prints the error on the backend console for debugging.
+
+        return res.status(500).json({
+            error: "Internal server error"
+        });
+        // Sends HTTP 500 (Internal Server Error) to the frontend
+        // in JSON format.
     }
 };
 
-export const addExpense = async (req, res) => {
+
+
+// ------------------------------------------------------------
+// DELETE EXPENSE
+// ------------------------------------------------------------
+
+export const deleteExpense = async (req, res) => {
+    // Controller responsible for deleting an expense.
+    // It deletes only an expense belonging to the logged-in user.
 
     try {
-        const { title, amount, category, date, type } = req.body; // Getting  the new expense from req.body as frontend sends it to backend // You're destructuring the data coming from the frontend.
-        
-                if (!title || !category || !date || !type || amount === undefined) {
-                    return res.status(400).json({ error: "Missing required fields" });
-                }
 
-        const trimmedTitle = title.trim(); // remove the unnecessary whitespaces from title and store it in trimmedTitle
+        const id = req.params.id;
+        // req.params contains dynamic parameters from the URL.
+        //
+        // For a route such as:
+        // DELETE /api/expenses/65abc123
+        //
+        // req.params is:
+        // { id: "65abc123" }
+        //
+        // Therefore req.params.id gives us:
+        // "65abc123"
+
+
+
+        if (!mongoose.isValidObjectId(id)) {
+            // Checks whether the provided ID has a valid MongoDB ObjectId format.
+            // This checks the format of the ID, NOT whether the document actually exists.
+
+            return res.status(400).json({
+                error: "Invalid ID"
+            });
+            // Sends HTTP 400 (Bad Request) if the ID format is invalid.
+        }
+
+
+
+        const response = await Expense.findOneAndDelete({
+            // Finds ONE expense matching ALL of the conditions below
+            // and deletes it if found.
+
+            _id: id,
+            // The expense's MongoDB ID must match the ID from the URL.
+
+            user: req.user.id
+            // The expense must also belong to the currently logged-in user.
+            //
+            // This prevents a user from deleting another user's expense
+            // simply by knowing its ID.
+        });
+
+
+
+        if (!response) {
+            // If no matching expense was found,
+            // findOneAndDelete() returns null.
+
+            return res.status(404).json({
+                error: "Expense not found"
+            });
+            // Sends HTTP 404 (Not Found) to the frontend.
+        }
+
+
+
+        res.json(response);
+        // If the expense was successfully deleted,
+        // sends the deleted expense document back as JSON.
+    }
+
+    catch (error) {
+
+        console.error(error);
+        // Logs the unexpected backend error.
+
+        return res.status(500).json({
+            error: "Internal server error"
+        });
+        // Sends HTTP 500 to the frontend.
+    }
+};
+
+
+
+// ------------------------------------------------------------
+// ADD EXPENSE
+// ------------------------------------------------------------
+
+export const addExpense = async (req, res) => {
+    // Controller responsible for creating a new expense
+    // for the currently authenticated user.
+
+    try {
+
+        const { title, amount, category, date, type } = req.body;
+        // req.body contains data sent by the frontend.
+        //
+        // Example:
+        // {
+        //     title: "Food",
+        //     amount: 500,
+        //     category: "Food",
+        //     date: "2026-09-25",
+        //     type: "expense"
+        // }
+        //
+        // Destructuring extracts these values into separate variables.
+
+
+
+        if (!title || !category || !date || !type || amount === undefined) {
+            // Checks whether any required field is missing.
+            //
+            // amount === undefined is used instead of !amount because 0 is also
+            // a falsy value in JavaScript.
+            // We want the later validation to specifically handle invalid/zero amounts.
+
+            return res.status(400).json({
+                error: "Missing required fields"
+            });
+            // Sends HTTP 400 because the client did not provide all required data.
+        }
+
+
+
+        const trimmedTitle = title.trim();
+        // Removes unnecessary whitespace from the beginning and end of the title.
+        //
+        // Example:
+        // "   Grocery   " → "Grocery"
+
+
 
         if (trimmedTitle.length < 1 || trimmedTitle.length > 100) {
+            // Makes sure the title contains between 1 and 100 characters.
+
             return res.status(400).json({
                 error: "Title must be between 1 and 100 characters"
             });
         }
 
-        const numericAmount = Number(amount); // converting amount to number as by default it is a string
 
-        if (!Number.isFinite(numericAmount) || numericAmount <= 0) { // checking if amount is a valid number and greater than 0 if not return error to frontend
+
+        const numericAmount = Number(amount);
+        // Converts amount into a JavaScript number.
+        //
+        // Example:
+        // "500" → 500
+
+
+
+        if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+            // Checks that the amount is:
+            // 1. A valid finite number
+            // 2. Greater than 0
+            //
+            // This rejects values such as:
+            // NaN
+            // Infinity
+            // 0
+            // negative numbers
+
             return res.status(400).json({
                 error: "Amount must be a valid positive number"
             });
         }
 
-        const allowedCategories = [ // amking an array of allowed categories 
+
+
+        const allowedCategories = [
+            // Defines the categories that the application allows.
+
             "Food",
             "Travel",
             "Entertainment",
@@ -140,59 +397,129 @@ export const addExpense = async (req, res) => {
             "Health",
         ];
 
-        if (!allowedCategories.includes(category)) { // if your category is not in allowed categories then return error
+
+
+        if (!allowedCategories.includes(category)) {
+            // Checks whether the submitted category exists
+            // inside the allowedCategories array.
+
             return res.status(400).json({
                 error: "Invalid category"
             });
         }
 
+
+
         const allowedTypes = ["income", "expense"];
+        // Defines the only two types allowed by the application.
+
+
 
         if (!allowedTypes.includes(type)) {
+            // Checks whether the submitted type is either
+            // "income" or "expense".
+
             return res.status(400).json({
                 error: "Invalid expense type"
             });
         }
 
-        const expenseDate = new Date(date); // converting date into date format
 
-        if (Number.isNaN(expenseDate.getTime())) { // ??? 
+
+        const expenseDate = new Date(date);
+        // Converts the incoming date value into a JavaScript Date object.
+
+
+
+        if (Number.isNaN(expenseDate.getTime())) {
+            // getTime() returns a numeric timestamp for a valid Date.
+            // An invalid Date produces NaN.
+            // Therefore this checks whether the provided date is invalid.
+
             return res.status(400).json({
                 error: "Invalid date"
             });
         }
 
-        const userId = req.user.id;// comes from verified jwt
 
-        const newExpense = new Expense({ // newExpense is a JavaScript object as it has key and values 
-            // id: id, // mongodb makes its own id
+
+        const userId = req.user.id;
+        // Gets the authenticated user's ID.
+        // This comes from the protect middleware after the JWT is verified.
+        //
+        // The frontend should NOT be trusted to tell us which user owns the expense.
+        // The authenticated user ID comes from req.user.
+
+
+
+        const newExpense = new Expense({
+            // Creates a new Mongoose document using the Expense model.
+            //
+            // At this point the document exists in the Node.js application's memory.
+            // It has NOT been saved to MongoDB yet.
+
+            // MongoDB automatically generates the _id.
+
             user: userId,
+            // Associates this expense with the authenticated user.
+
             title: trimmedTitle,
+            // Stores the cleaned title.
+
             amount: numericAmount,
+            // Stores the validated numeric amount.
+
             category,
+            // Stores the selected category.
+
             date: expenseDate,
+            // Stores the validated Date object.
+
             type
+            // Stores either "income" or "expense".
         });
 
-        await newExpense.save();  // rember always save the newExpense as object in mongodb
-        
-        res.status(201).json(newExpense); // send the newExpense to frontend 
-    } // javascript array
 
-    catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: "Internal server error" });
+
+        await newExpense.save();
+        // Saves the Mongoose document to MongoDB.
+        // This is the step that actually persists the new expense
+        // in the database.
+
+
+
+        res.status(201).json(newExpense);
+        // Sends the newly created expense back to the frontend as JSON.
+        //
+        // 201 means "Created" and is commonly used when a new resource
+        // has been successfully created.
     }
 
+    catch (error) {
+
+        console.error(error);
+        // Logs unexpected backend errors.
+
+        return res.status(500).json({
+            error: "Internal server error"
+        });
+        // Sends HTTP 500 to the frontend.
+    }
 };
 
-export const updateExpense = async (req, res) => {
+
+//--------------------------------------------------------------
+// Edit Expense
+//--------------------------------------------------------------
+
+export const updateExpense = async (req, res) => {// creating a async function to update a expense
     try {
-        const id = req.params.id;
+        const id = req.params.id; // req.params contains dynamic parameters from the URL
+        // we are storing the dynamic id provided by frontend in a variable 
 
 
-        if (!mongoose.isValidObjectId(id)) {
-            return res.status(400).json({ error: "Invalid ID" });
+        if (!mongoose.isValidObjectId(id)) { // checking if the id is in correct mongoose vormat
+            return res.status(400).json({ error: "Invalid ID" }); // if it is not in correct format then we are sending a error message and returning from thre function
         }
 
 
@@ -202,7 +529,7 @@ export const updateExpense = async (req, res) => {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
-        const updateData = {
+        const updateData = { //  storing the already existing data in a variable
             title,
             amount: Number(amount),
             category,
@@ -212,7 +539,7 @@ export const updateExpense = async (req, res) => {
 
         const options = { new: true }; // this tells Mongoose to return the updated document
 
-        const response = await Expense.findOneAndUpdate(
+        const response = await Expense.findOneAndUpdate( // find one expense in database with these particular conditions 
             {
                 _id: id,
                 user: req.user.id // who / what to find 
@@ -229,23 +556,23 @@ export const updateExpense = async (req, res) => {
         //     type
         // };
 
-        if (!response) {
-            return res.status(404).json({ error: "Expense not found" }); // id to hai pee expense nahi hai
+        if (!response) { 
+            return res.status(404).json({ error: "Expense not found" }); // if can't find the expense then we are sending a error message
         }
 
-        res.json(response);
+        res.json(response);  // if found then we are sending the updated expense to the frontend
     }
     catch (error) {
         console.error(error);
-        return res.status(500).json({ error: "Internal server error" });
+        return res.status(500).json({ error: "Internal server error" }); // if there is any error then we are sending a error message in json format
     }
 };
 
-export const getExpenseById = async (req, res) => {
+export const getExpenseById = async (req, res) => { // this function helps in finding a particular expense by a given id
     try {
-        const { id } = req.params;
+        const { id } = req.params;  // req.params contains dynamic parameters from the URL // but why is id in curly brackets ??
 
-        const expense = await Expense.findOne({
+        const expense = await Expense.findOne({ // finding a particular expense by a given id and user
             _id: id,
             user: req.user.id,
         });
@@ -266,23 +593,23 @@ export const getExpenseById = async (req, res) => {
     }
 };
 
-export const getExpenseSummary = async (req, res) => {
+export const getExpenseSummary = async (req, res) => { // doing a summary of the expenses  in backend
     try {
-        const userId = new mongoose.Types.ObjectId(req.user.id);
+        const userId = new mongoose.Types.ObjectId(req.user.id); // converting the coming id into mongoose format 
 
-        const summary = await Expense.aggregate([
+        const summary = await Expense.aggregate([ // doing calculations on the expenses
             {
-                $match: {
+                $match: { // first match the user id with the one in the database 
                     user: userId
-                }
+                } 
             },
             {
-                $group: {
-                    _id: null,
+                $group: { // grouping the expenses by user id 
+                    _id: null, // null means no group   ,, why are we doing this ??
 
-                    totalIncome: {
-                        $sum: {
-                            $cond: [
+                    totalIncome: { // 
+                        $sum: {  // applying sum function
+                            $cond: [ // if the type is income then sum the amount else 0
                                 { $eq: ["$type", "income"] },
                                 "$amount",
                                 0
@@ -337,7 +664,7 @@ export const getExpenseSummary = async (req, res) => {
             }
         ]);
 
-        const categorySummary = await Expense.aggregate([
+        const categorySummary = await Expense.aggregate([ // what does aggreate means and why are we doing this ?
             {
                 $match: {
                     user: userId,
@@ -359,7 +686,7 @@ export const getExpenseSummary = async (req, res) => {
             total: item.total,
         }));
 
-        const result = summary[0] || {
+        const result = summary[0] || { // if summary is empty then return an empty object else return the summary
             totalIncome: 0,
             totalExpense: 0,
             numberOfExpenses: 0,
@@ -371,7 +698,7 @@ export const getExpenseSummary = async (req, res) => {
         const totalBalance =
             result.totalIncome - result.totalExpense;
 
-        return res.json({
+        return res.json({ // returning the summary
             totalIncome: result.totalIncome,
             totalExpense: result.totalExpense,
             totalBalance,

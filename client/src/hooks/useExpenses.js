@@ -44,6 +44,7 @@ const useExpenses = () => {
     
     const [summaryLoading, setSummaryLoading] = useState(false);
     const [summaryError, setSummaryError] = useState(null);
+    const [mutationError , setMutationError] = useState(null);
 
     // -------------------------
     // API states
@@ -87,6 +88,7 @@ const useExpenses = () => {
         };
     }, [searchTerm]);
 
+
     // -------------------------
     // Fetch expenses
     // -------------------------
@@ -98,7 +100,7 @@ const useExpenses = () => {
         try {
             const query = {
                 page,
-                limit: 2,
+                limit: 10,
             };
 
             if (debouncedSearch) {
@@ -126,6 +128,7 @@ const useExpenses = () => {
         } catch (error) {
             console.error(error);
             setError(error.message);
+            throw error; // because now the error can travel back to whoever called fetchExpenses().
         } finally {
             setLoading(false);
         }
@@ -135,10 +138,11 @@ const useExpenses = () => {
         filterType,
         filterCategory,
         sortOption,
-    ]);
+    ]); // fetchExpenses → handles and records API failure
+    // Expenses.jsx → decides how the recorded error should be displayed
 
-    useEffect(() => {
-        fetchExpenses();
+    useEffect(() => { // useEffect → consumes the rejected Promise
+        fetchExpenses().catch(() => {});// The useEffect doesn't need to display another toast or set another error. // swallowing errors //  Here it is intentional because the error has already been handled by fetchExpenses(). // duplicate toast notifications
     }, [fetchExpenses]);
 
     //-------------------------
@@ -165,8 +169,9 @@ const useExpenses = () => {
     }, []);
 
     useEffect(() => { // fetch it automatically
-        fetchRecentExpenses();
+        fetchRecentExpenses().catch(() => {});
     }, [fetchRecentExpenses]);
+
     //-------------------------
     //Fetch Expense Summary
     //--------------------------
@@ -191,7 +196,7 @@ const useExpenses = () => {
     }, []);
 
     useEffect(() => {
-        fetchExpenseSummary();
+        fetchExpenseSummary().catch(() => {});
     }, [fetchExpenseSummary]);
     // -------------------------
     // Pagination
@@ -216,24 +221,19 @@ const useExpenses = () => {
     const handleAddExpense = useCallback(
         async (newExpense) => {
             setIsAdding(true);
-            setError(null);
+            setMutationError(null);
 
             try {
                 await addExpense(newExpense);
 
-                await Promise.all([ // Both requests are independent. // fetchExpenses() and fetchExpenseSummary() ko sath sath fetch kro.
-                    fetchExpenses(),
-                    fetchExpenseSummary(),
-                    fetchRecentExpenses()
-                ]);
-
                 toast.success("Expense added successfully");
 
+            
                 return true;
             } catch (error) {
                 console.error(error);
 
-                setError(error.message);
+                setMutationError(error.message);
                 toast.error(
                     error.message || "Failed to add expense"
                 );
@@ -243,7 +243,7 @@ const useExpenses = () => {
                 setIsAdding(false);
             }
         },
-        [fetchExpenses , fetchExpenseSummary , fetchRecentExpenses]
+        []
     );
 
     // -------------------------
@@ -252,35 +252,43 @@ const useExpenses = () => {
 
     const handleDelete = useCallback(
         async (id) => {
-            setError(null);
+            setMutationError(null);
             setDeletingId(id);
-
+    
             try {
                 await deleteExpense(id);
-
-                const [data] = await Promise.all([
-                    fetchExpenses(),
-                    fetchExpenseSummary(),
-                    fetchRecentExpenses()
-                ]);
-                
+            } catch (error) {
+                console.error(error);
+                setMutationError(error.message);
+    
+                toast.error(
+                    error.message || "Failed to delete expense"
+                );
+    
+                throw error;
+            }
+    
+            try {
+                const data = await fetchExpenses();
+    
                 if (page > data.totalPages && page > 1) {
                     setPage((previousPage) => previousPage - 1);
                 }
-
+    
                 toast.success("Expense deleted successfully");
             } catch (error) {
                 console.error(error);
-
-                setError(error.message);
-                toast.error(
-                    error.message || "Failed to delete expense"
+    
+                setMutationError(error.message);
+    
+                toast.success(
+                    "Expense deleted, but the list could not be refreshed"
                 );
             } finally {
                 setDeletingId(null);
             }
         },
-        [fetchExpenses,fetchExpenseSummary, page , fetchRecentExpenses]
+        [fetchExpenses, page]
     );
 
     // -------------------------
@@ -301,29 +309,22 @@ const useExpenses = () => {
 
     const handleSave = useCallback(
         async (updatedExpense) => {
-            setError(null);
+            setMutationError(null);
             setUpdatingId(updatedExpense._id);
 
             try {
                 await updateExpense(updatedExpense);
 
-                await Promise.all([
-                    fetchExpenses(),
-                    fetchExpenseSummary(),
-                    fetchRecentExpenses()
-                ]);
-
                 setEditingId(null);
 
-                toast.success(
-                    "Expense updated successfully"
-                );
+                toast.success("Expense updated successfully");
 
                 return true;
             } catch (error) {
                 console.error(error);
 
-                setError(error.message);
+                setMutationError(error.message);
+
                 toast.error(
                     error.message || "Failed to update expense"
                 );
@@ -333,7 +334,7 @@ const useExpenses = () => {
                 setUpdatingId(null);
             }
         },
-        [fetchExpenses , fetchExpenseSummary , fetchRecentExpenses]
+        []
     );
 
     // ------------------------- 
@@ -446,6 +447,7 @@ const useExpenses = () => {
         isAdding,
         deletingId,
         updatingId,
+        mutationError,
 
         // Pagination
         page,
@@ -477,9 +479,9 @@ const useExpenses = () => {
 
         // Recent
         recentExpenses,
-recentLoading,
-recentError,
-fetchRecentExpenses,
+        recentLoading,
+        recentError,
+        fetchRecentExpenses,
 
     };
 };

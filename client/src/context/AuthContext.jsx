@@ -6,6 +6,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
+import { logoutUser } from "../api/expenseApi";
 
 const AuthContext = createContext();
 
@@ -32,8 +33,7 @@ export const AuthProvider = ({ children }) => {
         }
     });
 
-    console.log(user);
-
+   
     const isAuthenticated = Boolean(token);
     //------------------
     //--Register Fetching--
@@ -105,10 +105,16 @@ export const AuthProvider = ({ children }) => {
     //--Logout Fetching--
     // ------------------
 
-    const logout = () => { // JWT delete karega aur user ko logged-out state mein le jayega.
-        localStorage.removeItem("token");
-        setToken(null);
-        setUser(null);
+    const logout = async () => {
+        try {
+            await logoutUser();
+        } catch (error) {
+            console.error("Logout request failed:", error);
+        } finally {
+            localStorage.removeItem("token");
+            setToken(null);
+            setUser(null);
+        }
     };
 
     

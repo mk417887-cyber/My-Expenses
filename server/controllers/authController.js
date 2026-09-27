@@ -1,24 +1,76 @@
-
+import RefreshSession from "../models/RefreshSession.js";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import crypto from "crypto";
+import ms from "ms";
 import dotenv from "dotenv";
+
 dotenv.config();
 
+const getRefreshTokenLifetime = () => {
+    const lifetime = ms(
+        process.env.REFRESH_TOKEN_EXPIRES_IN
+    );
+
+    if (!lifetime) {
+        throw new Error(
+            "Invalid REFRESH_TOKEN_EXPIRES_IN"
+        );
+    }
+
+    return lifetime;
+};
+
+const getRefreshCookieOptions = () => ({
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite:
+        process.env.NODE_ENV === "production"
+            ? "none"
+            : "lax",
+    maxAge: getRefreshTokenLifetime(),
+});
+
+//---------------------------------------------
+//REGISTER----------------------------------
+//---------------------------------------------
 export const register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
-        if (name.trim() === "" || email.trim() === "" || password.trim() === "") {
+        if (
+            typeof name !== "string" ||
+            typeof email !== "string" ||
+            typeof password !== "string"
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Please fill all the fields",
             });
         }
 
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;// regex for email
+        const normalizedName = name.trim();
+        const normalizedEmail = email
+            .trim()
+            .toLowerCase();
 
-        if (!emailPattern.test(email)) {
+        if (
+            !normalizedName ||
+            !normalizedEmail ||
+            !password
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Please fill all the fields",
+            });
+        }
+
+        const emailPattern =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailPattern.test(normalizedEmail)) {
             return res.status(400).json({
                 success: false,
                 message: "Please enter valid email",
@@ -27,20 +79,19 @@ export const register = async (req, res) => {
 
         if (
             password.length < 6 ||
-            !/\d/.test(password) || // checking for number
-            !/[A-Za-z]/.test(password) // checking for letter
+            !/\d/.test(password) ||
+            !/[A-Za-z]/.test(password)
         ) {
             return res.status(400).json({
                 success: false,
-                message: "Password must contain at least one letter and one number and be at least 6 characters long",
+                message:
+                    "Password must contain at least one letter and one number and be at least 6 characters long",
             });
         }
 
-        const normalizedEmail = email.trim().toLowerCase(); //So normalizedEmail is your JavaScript variable, not your MongoDB field name.
-
-        const normalizedName = name.trim();// "     mdsjbdc     " clean up
-
-        const userExists = await User.findOne({ email: normalizedEmail }); // "MongoDB, find me one user whose email matches this email."
+        const userExists = await User.findOne({
+            email: normalizedEmail,
+        });
 
         if (userExists) {
             return res.status(400).json({
@@ -49,9 +100,12 @@ export const register = async (req, res) => {
             });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10); // 10 -> salt rounds / cost factor means Spend this much computational effort making the password hash.”
+        const hashedPassword = await bcrypt.hash(
+            password,
+            10
+        );
 
-        const user = new User({ // This creates a Mongoose document in memory. but does not save in mongoose yet
+        const user = new User({
             name: normalizedName,
             email: normalizedEmail,
             password: hashedPassword,
@@ -63,9 +117,8 @@ export const register = async (req, res) => {
             success: true,
             message: "User created successfully",
         });
-    }
-    catch (error) {
-        console.error(error);
+    } catch (error) {
+        console.error("REGISTER ERROR:", error);
 
         if (error.code === 11000) {
             return res.status(400).json({
@@ -76,24 +129,42 @@ export const register = async (req, res) => {
 
         return res.status(500).json({
             success: false,
-            message: "Internal server error"
+            message: "Internal server error",
         });
     }
-
 };
 
+//---------------------------------------------
+//LOGIN----------------------------------
+//---------------------------------------------
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        if (!email || !password) {
+        if (
+            typeof email !== "string" ||
+            typeof password !== "string"
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "Please fill all the fields",
             });
         }
 
-        const user = await User.findOne({ email });
+        const normalizedEmail = email
+            .trim()
+            .toLowerCase();
+
+        if (!normalizedEmail || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Please fill all the fields",
+            });
+        }
+
+        const user = await User.findOne({
+            email: normalizedEmail,
+        });
 
         if (!user) {
             return res.status(401).json({
@@ -102,7 +173,11 @@ export const login = async (req, res) => {
             });
         }
 
-        const isPasswordCorrect = await bcrypt.compare(password, user.password) // "Does this plain-text password correspond to this stored bcrypt hash?"
+        const isPasswordCorrect =
+            await bcrypt.compare(
+                password,
+                user.password
+            );
 
         if (!isPasswordCorrect) {
             return res.status(401).json({
@@ -111,59 +186,87 @@ export const login = async (req, res) => {
             });
         }
 
-        const token = jwt.sign(
+        const accessToken = jwt.sign(
             {
-                id: user._id, // payload
+                id: user._id,
                 name: user.name,
-                email: user.email // never put password in the token
+                email: user.email,
             },
-            process.env.JWT_SECRET,//secret
+            process.env.JWT_SECRET,
             {
-                expiresIn: process.env.JWT_EXPIRES_IN,// options
+                expiresIn:
+                    process.env.JWT_EXPIRES_IN,
             }
-        );// paylod -> info we want to include in the token // secret -> a secret key used to sign the token // options -> options for the token
+        );
 
+        const tokenFamily =
+            crypto.randomUUID();
+
+        const jti = crypto.randomUUID();
 
         const refreshToken = jwt.sign(
             {
                 id: user._id,
+                jti,
             },
             process.env.REFRESH_TOKEN_SECRET,
             {
-                expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
+                expiresIn:
+                    process.env
+                        .REFRESH_TOKEN_EXPIRES_IN,
             }
         );
 
-        res.cookie("refreshToken", refreshToken, { // cookies me refreshToken respond kro as refreshToken 
-            httpOnly: true,// java cannot read cookie 
-            secure: process.env.NODE_ENV === "production", //  secure production mein HTTPS enforce karega, In production: HTTPS → cookie allowed , HTTP  → cookie not sent // uring local development, secure is false, so your http://localhost:3001 setup still works.
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // browser ko control karega ki cookie kab send karni hai. This controls when the browser sends the cookie in cross-site situations. // When frontend and backend are deployed on different sites/domains and we're using cross-site cookies, we'll need to configure SameSite=None together with Secure.
-            maxAge: 7 * 24 * 60 * 60 * 1000,// 7 days × 24 hours × 60 minutes × 60 seconds × 1000 ms browser keeps the cookies for exactly 7 days
+        const tokenHash =
+            await bcrypt.hash(
+                refreshToken,
+                10
+            );
+
+        const refreshLifetime =
+            getRefreshTokenLifetime();
+
+        await RefreshSession.create({
+            user: user._id,
+            jti,
+            tokenFamily,
+            tokenHash,
+            expiresAt: new Date(
+                Date.now() +
+                    refreshLifetime
+            ),
         });
 
+        res.cookie(
+            "refreshToken",
+            refreshToken,
+            getRefreshCookieOptions()
+        );
 
-        return res.status(200).json({ // we are giving a HTTp response to frontend 
+        return res.status(200).json({
             success: true,
             message: "Login successful",
-            token
+            token: accessToken,
         });
-
-
-
-    }
-    catch (error) {
-        console.error(error);
+    } catch (error) {
+        console.error("LOGIN ERROR:", error);
 
         return res.status(500).json({
             success: false,
-            message: "Internal server error"
+            message: "Internal server error",
         });
     }
-}
+};
 
-export const refresh = async (req, res) => { // jbb koi iise call kre to use naya token return krr do
+//---------------------------------------------
+//REFRESH----------------------------------
+//---------------------------------------------
+export const refresh = async (req, res) => {
+    let mongoSession;
+
     try {
-        const refreshToken = req.cookies.refreshToken;
+        const refreshToken =
+            req.cookies.refreshToken;
 
         if (!refreshToken) {
             return res.status(401).json({
@@ -172,31 +275,244 @@ export const refresh = async (req, res) => { // jbb koi iise call kre to use nay
             });
         }
 
-        const decoded = jwt.verify( // checks whether the refresh token was signed by our server , has'nt been modified , has'nt expired // f valid, decoded.id gives us the user's ID.
+        const decoded = jwt.verify(
             refreshToken,
-            process.env.REFRESH_TOKEN_SECRET // Browser se refreshToken cookie req.cookies.refreshToken ke through milegi. jwt.verify() usko REFRESH_TOKEN_SECRET se verify karega.
+            process.env.REFRESH_TOKEN_SECRET
         );
 
-        const token = jwt.sign( // naya token bana diya 
-            {
-                id: decoded.id,
-            },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: process.env.JWT_EXPIRES_IN,
+        const session =
+            await RefreshSession.findOne({
+                user: decoded.id,
+                jti: decoded.jti,
+            });
+
+        if (!session) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid refresh session",
+            });
+        }
+
+        if (session.revokedAt) {
+            await RefreshSession.updateMany(
+                {
+                    user: decoded.id,
+                    tokenFamily:
+                        session.tokenFamily,
+                    revokedAt: null,
+                },
+                {
+                    $set: {
+                        revokedAt: new Date(),
+                    },
+                }
+            );
+
+            return res.status(401).json({
+                success: false,
+                message:
+                    "Refresh token reuse detected",
+            });
+        }
+
+        const isValid =
+            await bcrypt.compare(
+                refreshToken,
+                session.tokenHash
+            );
+
+        if (!isValid) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid refresh session",
+            });
+        }
+
+        if (session.expiresAt <= new Date()) {
+            return res.status(401).json({
+                success: false,
+                message:
+                    "Refresh session expired",
+            });
+        }
+
+        const refreshLifetime =
+            getRefreshTokenLifetime();
+
+        const newJti =
+            crypto.randomUUID();
+
+        const newRefreshToken =
+            jwt.sign(
+                {
+                    id: decoded.id,
+                    jti: newJti,
+                },
+                process.env.REFRESH_TOKEN_SECRET,
+                {
+                    expiresIn:
+                        process.env
+                            .REFRESH_TOKEN_EXPIRES_IN,
+                }
+            );
+
+        const newTokenHash =
+            await bcrypt.hash(
+                newRefreshToken,
+                10
+            );
+
+        mongoSession =
+            await mongoose.startSession();
+
+        mongoSession.startTransaction();
+
+        session.revokedAt = new Date();
+
+        await session.save({
+            session: mongoSession,
+        });
+
+        const newSession =
+            new RefreshSession({
+                user: decoded.id,
+                jti: newJti,
+                tokenFamily:
+                    session.tokenFamily,
+                tokenHash: newTokenHash,
+                expiresAt: new Date(
+                    Date.now() +
+                        refreshLifetime
+                ),
+            });
+
+        await newSession.save({
+            session: mongoSession,
+        });
+
+        await mongoSession.commitTransaction();
+
+        res.cookie(
+            "refreshToken",
+            newRefreshToken,
+            getRefreshCookieOptions()
+        );
+
+        const accessToken =
+            jwt.sign(
+                {
+                    id: decoded.id,
+                },
+                process.env.JWT_SECRET,
+                {
+                    expiresIn:
+                        process.env.JWT_EXPIRES_IN,
+                }
+            );
+
+        return res.status(200).json({
+            success: true,
+            token: accessToken,
+        });
+    } catch (error) {
+        if (
+            mongoSession &&
+            mongoSession.inTransaction()
+        ) {
+            try {
+                await mongoSession.abortTransaction();
+            } catch (abortError) {
+                console.error(
+                    "TRANSACTION ABORT ERROR:",
+                    abortError
+                );
             }
+        }
+
+        console.error("REFRESH ERROR:", error);
+
+        return res.status(401).json({
+            success: false,
+            message:
+                "Invalid or expired refresh token",
+        });
+    } finally {
+        if (mongoSession) {
+            await mongoSession.endSession();
+        }
+    }
+};
+
+//---------------------------------------------
+//LOGOUT----------------------------------
+//---------------------------------------------
+export const logout = async (req, res) => {
+    try {
+        const refreshToken =
+            req.cookies.refreshToken;
+
+        if (!refreshToken) {
+            res.clearCookie(
+                "refreshToken",
+                getRefreshCookieOptions()
+            );
+
+            return res.status(200).json({
+                success: true,
+                message: "Already logged out",
+            });
+        }
+
+        const decoded = jwt.verify(
+            refreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        );
+
+        const session =
+            await RefreshSession.findOne({
+                user: decoded.id,
+                jti: decoded.jti,
+                revokedAt: null,
+            });
+
+        if (session) {
+            const isValid =
+                await bcrypt.compare(
+                    refreshToken,
+                    session.tokenHash
+                );
+
+            if (isValid) {
+                session.revokedAt =
+                    new Date();
+
+                await session.save();
+            }
+        }
+
+        res.clearCookie(
+            "refreshToken",
+            getRefreshCookieOptions()
         );
 
         return res.status(200).json({
             success: true,
-            token,
+            message: "Logout successful",
         });
     } catch (error) {
-        console.error(error);
+        console.error(
+            "LOGOUT ERROR:",
+            error
+        );
 
-        return res.status(401).json({
-            success: false,
-            message: "Invalid or expired refresh token",
+        res.clearCookie(
+            "refreshToken",
+            getRefreshCookieOptions()
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Logout successful",
         });
     }
 };

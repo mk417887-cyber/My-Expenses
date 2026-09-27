@@ -2,40 +2,90 @@ import { API_BASE_URL } from "./apiConfig";
 
 let refreshPromise = null;
 
-export const refreshAccessToken = async () => { //Ask the backend for a new access token and return it.
-    const response = await fetch(
-        `${API_BASE_URL}/api/auth/refresh`,
-        {
-            method: "POST",
-            credentials: "include", // Include the HttpOnly refreshToken cookie with this request.
-        }
-    );
+export const refreshAccessToken = async () => {
+    let response;
 
-    const data = await response.json();
-
-    if (!response.ok) {
-        throw new Error(
-            data.message || "Unable to refresh access token"
+    try {
+        response = await fetch(
+            `${API_BASE_URL}/api/auth/refresh`,
+            {
+                method: "POST",
+                credentials: "include",
+            }
         );
+    } catch {
+        const error = new Error(
+            "Unable to connect to the server. Please check your internet connection."
+        );
+
+        error.isNetworkError = true;
+
+        throw error;
     }
 
-    return data.token; // the caller receives the new access token.
+    let data = null;
+
+    try {
+        data = await response.json();
+    } catch {
+        data = null;
+    }
+
+    if (!response.ok) {
+        const error = new Error(
+            data?.message ||
+            data?.error ||
+            "Unable to refresh access token"
+        );
+
+        error.status = response.status;
+
+        throw error;
+    }
+
+    if (!data?.token) {
+        const error = new Error(
+            "The server did not return a valid access token."
+        );
+
+        error.status = 500;
+
+        throw error;
+    }
+
+    return data.token;
 };
 
 const handleAuthFailure = () => {
     window.dispatchEvent(new Event("unauthorized"));
 };
 
-const requestWithAuth = async (url, options = {}) => {
+const createNetworkError = () => { // network error -> means frontens -> fetch() but fetching fails
+    const error = new Error( // Frontend → request → backend unavailable → network error → UI error
+        "Unable to connect to the server. Please check your internet connection."
+    );
+
+    error.isNetworkError = true;
+
+    return error;
+};
+
+const requestWithAuth = async (url, options = {}) => { // Because requestWithAuth() is the central place through which all protected expense requests pass.
     const token = localStorage.getItem("token");
 
-    const response = await fetch(url, {
-        ...options,
-        headers: {
-            ...options.headers,
-            Authorization: `Bearer ${token}`,
-        },
-    });
+    let response;
+
+    try {
+        response = await fetch(url, {
+            ...options,
+            headers: {
+                ...options.headers,
+                Authorization: `Bearer ${token}`,
+            },
+        });
+    } catch {
+        throw createNetworkError();
+    }
 
     if (response.status !== 401) {
         return response;
@@ -67,33 +117,39 @@ const requestWithAuth = async (url, options = {}) => {
 
         return retryResponse;
     } catch (error) {
-        handleAuthFailure();
+
+        if (error.status === 401) { // refresh token expired
+            handleAuthFailure();
+        }
+
         throw error;
     }
 };
 
-const handleResponse = async (response) => { // e your API layer now has one place responsible for interpreting HTTP responses instead of duplicating that logic four times.
-    // 1. If response is successful,
-    //    return the parsed JSON data.
-    if (response.ok) {
-        return await response.json(); // Response ke body mein jo JSON data aaya hai, usko JavaScript object mein convert karo.
-    }
-    const error = await response.json();
 
+const handleResponse = async (response) => {
+    let data = null;
 
-    if (response.status === 401) {
-        const authError = new Error(
-            error.error || error.message || "Unauthorized"
-        );
-
-        authError.status = 401;
-        throw authError;
+    try {
+        data = await response.json();
+    } catch {
+        data = null;
     }
 
-    throw new Error(
-        error.error || error.message || "Something went wrong"
-    );
+    if (response.ok) { // valid json success 
+        return data;
+    }
 
+    const message = // valid json error 
+        data?.error ||
+        data?.message ||
+        "Something went wrong";
+
+    const apiError = new Error(message); // HTTP Error : Frontend → Backend → 500 response → fetch succeeds → response.ok = false  // fetching ke baad response aaya hai prr handle response me error aaya 
+
+    apiError.status = response.status;// Network Error : Frontend → ❌ Backend → fetch() itself throws → no response exists // failed to fetch
+
+    throw apiError;
 };
 
 export const getExpenses = async (query) => {
@@ -179,15 +235,8 @@ export const updateExpense = async (updatedExpense) => {
 
 export const getExpenseById = async (id) => {
     try {
-        const token = localStorage.getItem("token");
-
-        const response = await fetch(
-            `${API_BASE_URL}/api/expenses/${id}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
+        const response = await requestWithAuth(
+            `${API_BASE_URL}/api/expenses/${id}`
         );
 
         return await handleResponse(response);
@@ -222,3 +271,30 @@ export const getRecentExpenses = async () => {
         throw error;
     }
 };
+
+export const logoutUser = async () => {
+    let response;
+
+    try {
+        response = await fetch(
+            `${API_BASE_URL}/api/auth/logout`,
+            {
+                method: "POST",
+                credentials: "include",
+            }
+        );
+    } catch {
+        const error = new Error(
+            "Unable to connect to the server. Please check your internet connection."
+        );
+
+        error.isNetworkError = true;
+
+        throw error;
+    }
+
+    return await handleResponse(response);
+};
+
+
+// Current API layer → Finish Expenses CRUD/frontend → Dashboard → Profile → UI/UX polish → Forgot Password → Google Auth → Final security/testing → Deployment

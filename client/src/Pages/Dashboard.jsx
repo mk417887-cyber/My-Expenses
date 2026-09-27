@@ -72,26 +72,7 @@ const Dashboard = () => {
         },
     ];
 
-    // if (loading || summaryLoading) {
-    //     return (
-    //         <div className="p-6 lg:p-8">
-    //             <div className="mb-8">
-    //                 <div className="h-8 w-48 animate-pulse rounded bg-gray-200" />
-    //                 <div className="mt-3 h-4 w-72 animate-pulse rounded bg-gray-200" />
-    //             </div>
-
-    //             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-    //                 {[1, 2, 3, 4].map((item) => (
-    //                     <div
-    //                         key={item}
-    //                         className="h-36 animate-pulse rounded-2xl bg-gray-200"
-    //                     />
-    //                 ))}
-    //             </div>
-    //         </div>
-    //     );
-    // }
-
+  
     if (error || summaryError) {
         return (
             <div className="p-6 lg:p-8">
