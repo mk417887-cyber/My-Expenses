@@ -77,7 +77,7 @@ const requestWithAuth = async (url, options = {}) => { // Because requestWithAut
 
     try {
         response = await fetch(url, {
-            ...options,
+            ...options, // ...options already forwards signal automatically. // signal is also forwarded to the retry.
             headers: {
                 ...options.headers,
                 Authorization: `Bearer ${token}`,
@@ -152,13 +152,16 @@ const handleResponse = async (response) => {
     throw apiError;
 };
 
-export const getExpenses = async (query) => {
+export const getExpenses = async (query , signal) => {
     try {
         const params = new URLSearchParams(query);
 
 
         const response = await requestWithAuth(  // requestWithAuth() handles authentication/retry,
-            `${API_BASE_URL}/api/expenses?${params.toString()}`
+            `${API_BASE_URL}/api/expenses?${params.toString()}`,
+            {
+                signal, // signal is the communication channel between our AbortController and fetch()
+            }
         );
 
         return await handleResponse(response);  // handleResponse() handles interpreting the API response/error.

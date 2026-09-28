@@ -27,6 +27,7 @@ const Expenses = () => {
         expenseList,
 
         loading,
+        isInitialLoading,
         error,
         deletingId,
 
@@ -43,11 +44,11 @@ const Expenses = () => {
         handleFilterTypeChange,
         handleFilterCategoryChange,
         handleSortOptionChange,
-        
+
         handleDelete,
     } = useExpenses();
 
-    
+
     const navigate = useNavigate();
 
     const navigateToRecent = () => {
@@ -179,10 +180,17 @@ const Expenses = () => {
                     <h2 className="font-semibold text-gray-900">
                         Transactions
                     </h2>
-                    
-                    <button  onClick={ navigateToRecent } className="mt-2 text-sm font-medium text-indigo-600 hover:underline border-amber-500">
-                            Recent Expenses
-                        </button>
+
+                    {loading && !isInitialLoading && (
+                        <span className="text-xs text-gray-500">
+                            Updating...
+                        </span>
+                    )}
+
+
+                    <button onClick={navigateToRecent} className="mt-2 text-sm font-medium text-indigo-600 hover:underline border-amber-500">
+                        Recent Expenses
+                    </button>
 
                     <p className="mt-1 text-sm text-gray-500">
                         View and manage your transactions.
@@ -190,7 +198,7 @@ const Expenses = () => {
                 </div>
 
                 {/* Loading */}
-                {loading ? (
+                {isInitialLoading ? (
                     <div className="divide-y divide-gray-100">
                         {[1, 2, 3, 4, 5].map((item) => (
                             <div

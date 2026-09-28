@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect,  useState } from "react";
+import { useCallback, useEffect,  useState , useRef} from "react";
 import toast from "react-hot-toast";
 
 import {
@@ -12,6 +12,9 @@ import {
 } from "../api/expenseApi";
 
 const useExpenses = () => {
+
+    const abortControllerRef = useRef(null); // We need to remember the current request's controller between renders without causing a re-render.
+
     // -------------------------
     // Expense state
     // -------------------------
@@ -55,6 +58,7 @@ const useExpenses = () => {
     const [isAdding, setIsAdding] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
     const [updatingId, setUpdatingId] = useState(null);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
 
     // -------------------------
     // Search / Filter / Sort
@@ -97,6 +101,14 @@ const useExpenses = () => {
         setLoading(true);
         setError(null);
 
+        if (abortControllerRef.current) { // When B starts fetching, it should abort A's request.
+            abortControllerRef.current.abort();
+        }
+        
+        const controller = new AbortController();
+        
+        abortControllerRef.current = controller;
+
         try {
             const query = {
                 page,
@@ -119,17 +131,24 @@ const useExpenses = () => {
                 query.sort = sortOption;
             }
 
-            const data = await getExpenses(query);
+            const data = await getExpenses(query , controller.signal); // New fetch → abort previous controller → create new controller → store it in ref → pass signal → fetch
 
             setExpenseList(data.data);
             setTotalPages(data.totalPages);
+            setIsInitialLoading(false);
 
             return data;
         } catch (error) {
+            if (error.name === "AbortError") {
+                return;
+            } // Request A starts → Request B starts → A is aborted → AbortError → ignore A → B continues → B updates the UI
+        
+            setIsInitialLoading(false);
+            
             console.error(error);
             setError(error.message);
-            throw error; // because now the error can travel back to whoever called fetchExpenses().
-        } finally {
+            throw error;
+        }finally {
             setLoading(false);
         }
     }, [
@@ -140,6 +159,12 @@ const useExpenses = () => {
         sortOption,
     ]); // fetchExpenses → handles and records API failure
     // Expenses.jsx → decides how the recorded error should be displayed
+
+    useEffect(() => {
+        return () => {// This effect should run its cleanup only when this hook instance is unmounted.
+            abortControllerRef.current?.abort();
+        };
+    }, []);
 
     useEffect(() => { // useEffect → consumes the rejected Promise
         fetchExpenses().catch(() => {});// The useEffect doesn't need to display another toast or set another error. // swallowing errors //  Here it is intentional because the error has already been handled by fetchExpenses(). // duplicate toast notifications
@@ -443,6 +468,7 @@ const useExpenses = () => {
         expenseList,
         editingId,
         loading,
+        isInitialLoading,
         error,
         isAdding,
         deletingId,
