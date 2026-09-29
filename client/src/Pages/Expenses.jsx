@@ -30,6 +30,7 @@ const Expenses = () => {
         isInitialLoading,
         error,
         deletingId,
+        refreshError,
 
         page,
         totalPages,
@@ -170,6 +171,14 @@ const Expenses = () => {
                 <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4">
                     <p className="text-sm font-medium text-red-700">
                         {error}
+                    </p>
+                </div>
+            )}
+
+            {refreshError && !isInitialLoading && (
+                <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-sm font-medium text-amber-700">
+                        {refreshError}
                     </p>
                 </div>
             )}

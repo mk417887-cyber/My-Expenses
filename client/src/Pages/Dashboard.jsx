@@ -13,8 +13,8 @@ import useExpenses from "../hooks/useExpenses";
 const Dashboard = () => {
 
     const {
-    
-        error,
+
+
         totalIncome,
         totalExpense,
         totalBalance,
@@ -26,7 +26,7 @@ const Dashboard = () => {
         recentExpenses,
         recentLoading,
         recentError,
-        
+
         totalTransactions,
         totalByCategory,
     } = useExpenses();
@@ -72,22 +72,22 @@ const Dashboard = () => {
         },
     ];
 
-  
-    if (error || summaryError) {
-        return (
-            <div className="p-6 lg:p-8">
-                <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
-                    <h2 className="font-semibold text-red-700">
-                        Something went wrong
-                    </h2>
 
-                    <p className="mt-1 text-sm text-red-600">
-                        {error || summaryError}
-                    </p>
-                </div>
-            </div>
-        );
-    }
+    // if (error || summaryError) {
+    //     return (
+    //         <div className="p-6 lg:p-8">
+    //             <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
+    //                 <h2 className="font-semibold text-red-700">
+    //                     Something went wrong
+    //                 </h2>
+
+    //                 <p className="mt-1 text-sm text-red-600">
+    //                     {error || summaryError}
+    //                 </p>
+    //             </div>
+    //         </div>
+    //     );
+    // }
 
     return (
         <div className="p-6 lg:p-8">
@@ -106,52 +106,64 @@ const Dashboard = () => {
 
 
             {/* Stats */}
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-                {summaryLoading ? (
-                    [1, 2, 3, 4].map((item) => (
-                        <div
-                            key={item}
-                            className="h-36 animate-pulse rounded-2xl bg-gray-200"
-                        />
-                    ))
-                ) : (
-                    stats.map((stat) => {
-                        const Icon = stat.icon;
+            {summaryError ? (
+                <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
+                    <h2 className="font-semibold text-red-700">
+                        Unable to load summary
+                    </h2>
 
-                        return (
+                    <p className="mt-1 text-sm text-red-600">
+                        {summaryError}
+                    </p>
+                </div>
+            ) : (
+                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                    {summaryLoading ? (
+                        [1, 2, 3, 4].map((item) => (
                             <div
-                                key={stat.title}
-                                className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-                            >
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">
-                                            {stat.title}
-                                        </p>
+                                key={item}
+                                className="h-36 animate-pulse rounded-2xl bg-gray-200"
+                            />
+                        ))
+                    ) : (
+                        stats.map((stat) => {
+                            const Icon = stat.icon;
 
-                                        <h2 className="mt-2 text-2xl font-bold text-gray-900">
+                            return (
+                                <div
+                                    key={stat.title}
+                                    className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-500">
+                                                {stat.title}
+                                            </p>
 
-                                            {stat.isCurrency ? "₹" : ""}
-                                            {Number(stat.value).toLocaleString("en-IN")}
-                                        </h2>
+                                            <h2 className="mt-2 text-2xl font-bold text-gray-900">
+
+                                                {stat.isCurrency ? "₹" : ""}
+                                                {Number(stat.value).toLocaleString("en-IN")}
+                                            </h2>
+                                        </div>
+
+                                        <div className="rounded-xl bg-gray-100 p-3">
+                                            <Icon
+                                                size={21}
+                                                className="text-gray-700"
+                                            />
+                                        </div>
                                     </div>
 
-                                    <div className="rounded-xl bg-gray-100 p-3">
-                                        <Icon
-                                            size={21}
-                                            className="text-gray-700"
-                                        />
-                                    </div>
+                                    <p className="mt-4 text-sm text-gray-500">
+                                        {stat.description}
+                                    </p>
                                 </div>
-
-                                <p className="mt-4 text-sm text-gray-500">
-                                    {stat.description}
-                                </p>
-                            </div>
-                        );
-                    })
-                )}
-            </div>
+                            );
+                        })
+                    )}
+                </div>
+            )}
 
 
             {/* Additional statistics */}
@@ -259,6 +271,16 @@ const Dashboard = () => {
                                 <div className="h-2 w-full animate-pulse rounded-full bg-gray-200" />
                             </div>
                         ))}
+                    </div>
+                ) : summaryError ? (
+                    <div className="py-10 text-center">
+                        <p className="text-sm font-medium text-red-700">
+                            Unable to load spending data
+                        </p>
+
+                        <p className="mt-1 text-sm text-red-600">
+                            {summaryError}
+                        </p>
                     </div>
                 ) : totalByCategory.length === 0 ? (
                     <div className="py-10 text-center">
@@ -368,56 +390,54 @@ const Dashboard = () => {
                     <div className="divide-y divide-gray-100">
 
                         {recentExpenses.map((expense) => (
-                          <div
-                          onClick={() => navigateToEditExpense(expense._id)}
-                          key={expense._id}
-                          className="flex cursor-pointer items-center justify-between gap-4 px-6 py-5 transition hover:bg-gray-50"
-                      >
-                          {/* Left side */}
-                          <div className="flex min-w-0 items-center gap-4">
-                              <div
-                                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                                      expense.type === "income"
-                                          ? "bg-green-100 text-green-600"
-                                          : "bg-red-100 text-red-600"
-                                  }`}
-                              >
-                                  {expense.type === "income" ? (
-                                      <ArrowUpRight size={18} />
-                                  ) : (
-                                      <ArrowDownRight size={18} />
-                                  )}
-                              </div>
-                      
-                              <div className="min-w-0">
-                                  <p className="truncate text-sm font-semibold text-gray-900">
-                                      {expense.title}
-                                  </p>
-                      
-                                  <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                                      <span>{expense.category}</span>
-                      
-                                      <span>•</span>
-                      
-                                      <span>
-                                          {new Date(expense.date).toLocaleDateString("en-IN")}
-                                      </span>
-                                  </div>
-                              </div>
-                          </div>
-                      
-                          {/* Amount */}
-                          <p
-                              className={`shrink-0 text-sm font-semibold ${
-                                  expense.type === "income"
-                                      ? "text-green-600"
-                                      : "text-red-600"
-                              }`}
-                          >
-                              {expense.type === "income" ? "+" : "-"}₹
-                              {Number(expense.amount).toLocaleString("en-IN")}
-                          </p>
-                      </div>
+                            <div
+                                onClick={() => navigateToEditExpense(expense._id)}
+                                key={expense._id}
+                                className="flex cursor-pointer items-center justify-between gap-4 px-6 py-5 transition hover:bg-gray-50"
+                            >
+                                {/* Left side */}
+                                <div className="flex min-w-0 items-center gap-4">
+                                    <div
+                                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${expense.type === "income"
+                                            ? "bg-green-100 text-green-600"
+                                            : "bg-red-100 text-red-600"
+                                            }`}
+                                    >
+                                        {expense.type === "income" ? (
+                                            <ArrowUpRight size={18} />
+                                        ) : (
+                                            <ArrowDownRight size={18} />
+                                        )}
+                                    </div>
+
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-semibold text-gray-900">
+                                            {expense.title}
+                                        </p>
+
+                                        <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
+                                            <span>{expense.category}</span>
+
+                                            <span>•</span>
+
+                                            <span>
+                                                {new Date(expense.date).toLocaleDateString("en-IN")}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Amount */}
+                                <p
+                                    className={`shrink-0 text-sm font-semibold ${expense.type === "income"
+                                        ? "text-green-600"
+                                        : "text-red-600"
+                                        }`}
+                                >
+                                    {expense.type === "income" ? "+" : "-"}₹
+                                    {Number(expense.amount).toLocaleString("en-IN")}
+                                </p>
+                            </div>
                         ))}
                     </div>
                 )}

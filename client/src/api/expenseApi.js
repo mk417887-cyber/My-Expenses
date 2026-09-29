@@ -83,8 +83,11 @@ const requestWithAuth = async (url, options = {}) => { // Because requestWithAut
                 Authorization: `Bearer ${token}`,
             },
         });
-    } catch {
-        throw createNetworkError();
+    } catch(error) {
+        if (error.name === "AbortError") {
+            throw error;
+        }
+            throw createNetworkError();
     }
 
     if (response.status !== 401) {
@@ -117,6 +120,11 @@ const requestWithAuth = async (url, options = {}) => { // Because requestWithAut
 
         return retryResponse;
     } catch (error) {
+
+        if (error.name === "AbortError") {
+            throw error;
+        }
+    
 
         if (error.status === 401) { // refresh token expired
             handleAuthFailure();
@@ -236,7 +244,7 @@ export const updateExpense = async (updatedExpense) => {
     }
 };
 
-export const getExpenseById = async (id) => {
+export const getExpenseById = async (id , signal) => {
     try {
         const response = await requestWithAuth(
             `${API_BASE_URL}/api/expenses/${id}`

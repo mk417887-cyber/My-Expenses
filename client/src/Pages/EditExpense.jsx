@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import ExpenseForm from "../components/ExpenseForm";
@@ -16,23 +16,41 @@ const EditExpense = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        const controller = new AbortController();
+        let isActive = true;
+    
         const fetchExpense = async () => {
             try {
                 setLoading(true);
                 setError(null);
-
-                const data = await getExpenseById(id);
-
-                setExpense(data);
+    
+                const data = await getExpenseById(id, controller.signal);
+    
+                if (isActive) {
+                    setExpense(data);
+                }
             } catch (error) {
-                console.error(error);
-                setError(error.message);
+                if (error.name === "AbortError") {
+                    return;
+                }
+    
+                if (isActive) {
+                    console.error(error);
+                    setError(error.message);
+                }
             } finally {
-                setLoading(false);
+                if (isActive) {
+                    setLoading(false);
+                }
             }
         };
-
+    
         fetchExpense();
+    
+        return () => {
+            isActive = false;
+            controller.abort();
+        };
     }, [id]);
 
     const handleSubmit = async (updatedData) => {

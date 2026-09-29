@@ -29,6 +29,7 @@ const useExpenses = () => {
     const [recentExpenses, setRecentExpenses] = useState([]);
     const [recentLoading, setRecentLoading] = useState(false);
     const [recentError, setRecentError] = useState(null);
+    const [refreshError, setRefreshError] = useState(null);// We couldn't update the currently displayed results."
 
     //--------------------------
     //Expense Summaery
@@ -99,7 +100,11 @@ const useExpenses = () => {
 
     const fetchExpenses = useCallback(async () => {
         setLoading(true);
-        setError(null);
+        if (isInitialLoading) {
+            setError(null);
+        } else {
+            setRefreshError(null);
+        }
 
         if (abortControllerRef.current) { // When B starts fetching, it should abort A's request.
             abortControllerRef.current.abort();
@@ -142,12 +147,17 @@ const useExpenses = () => {
             if (error.name === "AbortError") {
                 return;
             } // Request A starts → Request B starts → A is aborted → AbortError → ignore A → B continues → B updates the UI
-        
-            setIsInitialLoading(false);
+
             
-            console.error(error);
-            setError(error.message);
-            throw error;
+if (isInitialLoading) {
+    setIsInitialLoading(false);
+    setError(error.message);
+} else {
+    setRefreshError(error.message);
+}
+
+console.error(error);
+throw error;
         }finally {
             setLoading(false);
         }
@@ -157,6 +167,7 @@ const useExpenses = () => {
         filterType,
         filterCategory,
         sortOption,
+        isInitialLoading
     ]); // fetchExpenses → handles and records API failure
     // Expenses.jsx → decides how the recorded error should be displayed
 
@@ -470,6 +481,7 @@ const useExpenses = () => {
         loading,
         isInitialLoading,
         error,
+        refreshError,
         isAdding,
         deletingId,
         updatingId,
