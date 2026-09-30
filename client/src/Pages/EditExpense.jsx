@@ -1,4 +1,4 @@
-import { useEffect, useState , useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import ExpenseForm from "../components/ExpenseForm";
@@ -18,14 +18,14 @@ const EditExpense = () => {
     useEffect(() => {
         const controller = new AbortController();
         let isActive = true;
-    
+
         const fetchExpense = async () => {
             try {
                 setLoading(true);
                 setError(null);
-    
+
                 const data = await getExpenseById(id, controller.signal);
-    
+
                 if (isActive) {
                     setExpense(data);
                 }
@@ -33,7 +33,7 @@ const EditExpense = () => {
                 if (error.name === "AbortError") {
                     return;
                 }
-    
+
                 if (isActive) {
                     console.error(error);
                     setError(error.message);
@@ -44,9 +44,9 @@ const EditExpense = () => {
                 }
             }
         };
-    
+
         fetchExpense();
-    
+
         return () => {
             isActive = false;
             controller.abort();
@@ -88,6 +88,13 @@ const EditExpense = () => {
                     <p className="mt-1 text-sm text-red-600">
                         {error}
                     </p>
+                    <button
+                        type="button"
+                        onClick={() => navigate("/expenses")}
+                        className="mt-4 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                    >
+                        Back to Expenses
+                    </button>
                 </div>
             </div>
         );

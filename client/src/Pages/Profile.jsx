@@ -19,7 +19,7 @@ const Profile = () => {
 
                     <div className="flex items-center gap-4">
                         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-900 text-xl font-bold text-white">
-                            {user?.name?.charAt(0).toUpperCase()}
+                            {user?.name?.charAt(0).toUpperCase() || "U"}
                         </div>
 
                         <div>
@@ -55,16 +55,7 @@ const Profile = () => {
                                 <p className="mt-1 text-sm text-gray-900">
                                     {user?.email}
                                 </p>
-                            </div>
-
-                            <div>
-                                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                                    User ID
-                                </p>
-                                <p className="mt-1 break-all text-sm text-gray-500">
-                                    {user?.id}
-                                </p>
-                            </div>
+                            </div>                         
                         </div>
                     </div>
                 </div>

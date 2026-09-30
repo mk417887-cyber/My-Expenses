@@ -17,7 +17,7 @@ import { Link } from "react-router-dom";
 
 import useExpenses from "../hooks/useExpenses";
 
-import { useNavigate } from "react-router-dom";
+
 
 const Expenses = () => {
 
@@ -50,11 +50,12 @@ const Expenses = () => {
     } = useExpenses();
 
 
-    const navigate = useNavigate();
 
-    const navigateToRecent = () => {
-        navigate("/dashboard");
-    }
+    const hasActiveFilters =
+        searchTerm.trim() !== "" ||
+        filterType !== "all" ||
+        filterCategory !== "all" ||
+        sortOption !== "default";
 
     return (
         <div className="p-6 lg:p-8">
@@ -96,6 +97,7 @@ const Expenses = () => {
                                 handleSearchChange(e.target.value)
                             }
                             placeholder="Search expenses..."
+                            aria-label="Search expenses"
                             className="w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
                         />
                     </div>
@@ -106,6 +108,7 @@ const Expenses = () => {
                         onChange={(e) =>
                             handleFilterTypeChange(e.target.value)
                         }
+                        aria-label="Filter by type"
                         className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400"
                     >
                         <option value="all">All types</option>
@@ -119,6 +122,7 @@ const Expenses = () => {
                         onChange={(e) =>
                             handleFilterCategoryChange(e.target.value)
                         }
+                        aria-label="Filter by category"
                         className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-gray-400"
                     >
                         <option value="all">All categories</option>
@@ -144,6 +148,7 @@ const Expenses = () => {
                             onChange={(e) =>
                                 handleSortOptionChange(e.target.value)
                             }
+                            aria-label="Sort expenses"
                             className="w-full appearance-none rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-10 text-sm text-gray-700 outline-none focus:border-gray-400 lg:w-44"
                         >
                             <option value="default">
@@ -196,11 +201,6 @@ const Expenses = () => {
                         </span>
                     )}
 
-
-                    <button onClick={navigateToRecent} className="mt-2 text-sm font-medium text-indigo-600 hover:underline border-amber-500">
-                        Recent Expenses
-                    </button>
-
                     <p className="mt-1 text-sm text-gray-500">
                         View and manage your transactions.
                     </p>
@@ -232,21 +232,39 @@ const Expenses = () => {
                         />
 
                         <h3 className="mt-4 font-semibold text-gray-900">
-                            No transactions found
+                            {hasActiveFilters
+                                ? "No matching transactions"
+                                : "No transactions yet"}
                         </h3>
 
                         <p className="mt-1 text-sm text-gray-500">
-                            Try changing your filters or add a new
-                            transaction.
+                            {hasActiveFilters
+                                ? "Try changing your search or filters."
+                                : "Add your first transaction to start tracking your finances."}
                         </p>
 
-                        <Link
-                            to="/expenses/add"
-                            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
-                        >
-                            <Plus size={17} />
-                            Add Expense
-                        </Link>
+                        {hasActiveFilters ? (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    handleSearchChange("");
+                                    handleFilterTypeChange("all");
+                                    handleFilterCategoryChange("all");
+                                    handleSortOptionChange("default");
+                                }}
+                                className="mt-5 inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                            >
+                                Clear Filters
+                            </button>
+                        ) : (
+                            <Link
+                                to="/expenses/add"
+                                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
+                            >
+                                <Plus size={17} />
+                                Add Expense
+                            </Link>
+                        )}
                     </div>
                 ) : (
                     /* Transactions */
@@ -325,6 +343,7 @@ const Expenses = () => {
 
                                         {/* Delete */}
                                         <button
+                                            type="button"
                                             onClick={() => setExpenseToDelete(expense)}
                                             disabled={deletingId === expense._id}
                                             className="rounded-lg p-2 text-gray-500 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
@@ -345,6 +364,7 @@ const Expenses = () => {
                     totalPages > 1 && (
                         <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4">
                             <button
+                                type="button"
                                 onClick={handlePreviousPage}
                                 disabled={page === 1}
                                 className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
@@ -365,6 +385,7 @@ const Expenses = () => {
                             </span>
 
                             <button
+                                type="button"
                                 onClick={handleNextPage}
                                 disabled={page === totalPages}
                                 className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"

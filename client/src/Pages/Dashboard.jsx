@@ -1,12 +1,13 @@
 import {
     ArrowDownRight,
     ArrowUpRight,
-    IndianRupee,
+
     Wallet,
     Receipt,
-    TrendingUp,
+
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+
+import { Link, useNavigate } from "react-router-dom";
 
 import useExpenses from "../hooks/useExpenses";
 
@@ -37,9 +38,6 @@ const Dashboard = () => {
         navigate("/expenses");
     }
 
-    const navigateToEditExpense = (id) => {
-        navigate(`/expenses/${id}/edit`);
-    };
 
     const stats = [
         {
@@ -72,22 +70,6 @@ const Dashboard = () => {
         },
     ];
 
-
-    // if (error || summaryError) {
-    //     return (
-    //         <div className="p-6 lg:p-8">
-    //             <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
-    //                 <h2 className="font-semibold text-red-700">
-    //                     Something went wrong
-    //                 </h2>
-
-    //                 <p className="mt-1 text-sm text-red-600">
-    //                     {error || summaryError}
-    //                 </p>
-    //             </div>
-    //         </div>
-    //     );
-    // }
 
     return (
         <div className="p-6 lg:p-8">
@@ -167,7 +149,6 @@ const Dashboard = () => {
 
 
             {/* Additional statistics */}
-            {/* Additional statistics */}
             <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
                 {summaryLoading ? (
                     [1, 2, 3, 4].map((item) => (
@@ -246,7 +227,6 @@ const Dashboard = () => {
             </div>
 
 
-            {/* Spending by Category */}
             {/* Spending by Category */}
             <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                 <div>
@@ -356,6 +336,7 @@ const Dashboard = () => {
                     </div>
 
                     <button
+                        type="button"
                         onClick={navigateToExpenses}
                         className="shrink-0 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
                     >
@@ -390,8 +371,9 @@ const Dashboard = () => {
                     <div className="divide-y divide-gray-100">
 
                         {recentExpenses.map((expense) => (
-                            <div
-                                onClick={() => navigateToEditExpense(expense._id)}
+
+                            <Link
+                                to={`/expenses/${expense._id}/edit`}
                                 key={expense._id}
                                 className="flex cursor-pointer items-center justify-between gap-4 px-6 py-5 transition hover:bg-gray-50"
                             >
@@ -437,7 +419,7 @@ const Dashboard = () => {
                                     {expense.type === "income" ? "+" : "-"}₹
                                     {Number(expense.amount).toLocaleString("en-IN")}
                                 </p>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 )}

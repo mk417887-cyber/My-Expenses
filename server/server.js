@@ -7,6 +7,8 @@ import cors from "cors";
 // whether a frontend from another origin (domain/port) is allowed
 // to make requests to this backend.
 
+import PasswordResetToken  from "./models/PasswordResetToken.js";
+
 import router from "./routes/routes.js";
 // Imports the main router containing application API routes/endpoints.
 

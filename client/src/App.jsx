@@ -518,24 +518,27 @@ import AddExpense from "./Pages/AddExpense";
 import Profile from "./Pages/Profile";
 import EditExpense from "./Pages/EditExpense";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import NotFound from "./Pages/NotFound";
+import PublicRoute from "./components/PublicRoute";
 
 const App = () => {
   return (
     <Routes>
-      {/* Public Pages */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route element={<PublicRoute />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Route>
 
       {/* Application Pages */}
-      <Route element={<ProtectedRoute />}> 
-      {/* // mtlb agr authenticated ho to hi yee pages pe jaa paoge */}
+      <Route element={<ProtectedRoute />}>
+        {/* // mtlb agr authenticated ho to hi yee pages pe jaa paoge */}
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/expenses" element={<Expenses />} />
           <Route path="/expenses/add" element={<AddExpense />} />
           <Route path="/expenses/:id/edit" element={<EditExpense />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Route>
     </Routes>

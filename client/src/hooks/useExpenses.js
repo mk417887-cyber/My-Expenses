@@ -60,6 +60,7 @@ const useExpenses = () => {
     const [deletingId, setDeletingId] = useState(null);
     const [updatingId, setUpdatingId] = useState(null);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
+    const isInitialLoadingRef = useRef(true); // ek yseRef box bnao with name isInitialLoadingRef jiski initial  value is true //s used internally by fetchExpenses() to remember whether we're still dealing with the first request without changing the callback's identity.
 
     // -------------------------
     // Search / Filter / Sort
@@ -100,7 +101,7 @@ const useExpenses = () => {
 
     const fetchExpenses = useCallback(async () => {
         setLoading(true);
-        if (isInitialLoading) {
+        if (isInitialLoadingRef.current) {
             setError(null);
         } else {
             setRefreshError(null);
@@ -112,12 +113,12 @@ const useExpenses = () => {
         
         const controller = new AbortController();
         
-        abortControllerRef.current = controller;
+        abortControllerRef.current = controller; // Changing .current does NOT cause the component to re-render. 
 
         try {
             const query = {
                 page,
-                limit: 10,
+                limit: 2,
             };
 
             if (debouncedSearch) {
@@ -140,7 +141,12 @@ const useExpenses = () => {
 
             setExpenseList(data.data);
             setTotalPages(data.totalPages);
+
+            if (page > data.totalPages && data.totalPages > 0) {
+                setPage(data.totalPages);
+            }
             setIsInitialLoading(false);
+            isInitialLoadingRef.current = false;
 
             return data;
         } catch (error) {
@@ -148,18 +154,19 @@ const useExpenses = () => {
                 return;
             } // Request A starts → Request B starts → A is aborted → AbortError → ignore A → B continues → B updates the UI
 
-            
-if (isInitialLoading) {
-    setIsInitialLoading(false);
-    setError(error.message);
-} else {
-    setRefreshError(error.message);
-}
+            if (isInitialLoadingRef.current) {
+                setError(error.message);
+            } else {
+                setRefreshError(error.message);
+            }
 
 console.error(error);
 throw error;
         }finally {
-            setLoading(false);
+            if (abortControllerRef.current === controller) {
+                setLoading(false);
+                abortControllerRef.current = null;
+            }
         }
     }, [
         page,
@@ -167,7 +174,7 @@ throw error;
         filterType,
         filterCategory,
         sortOption,
-        isInitialLoading
+      
     ]); // fetchExpenses → handles and records API failure
     // Expenses.jsx → decides how the recorded error should be displayed
 

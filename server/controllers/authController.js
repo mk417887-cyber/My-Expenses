@@ -516,3 +516,23 @@ export const logout = async (req, res) => {
         });
     }
 };
+
+export const ForgotPassword = async (req , res) => {
+
+    const user = await User.findOne({ email });
+
+    const resetToken = crypto.randomBytes(32).toString("hex"); // generating the raw token of 32 bytes 
+
+    const tokenHash = crypto // hashing the raw token 
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex"); // resetToken → SHA-256 → tokenHash
+
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await PasswordResetToken.create({ // creating a new password reset token in mongoDB
+        user: user._id,
+        tokenHash,
+        expiresAt,
+    });
+}
